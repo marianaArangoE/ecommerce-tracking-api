@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { body, param } from 'express-validator';
 import { users } from './mock';
-import { validate } from '../../middlewares/validate';
+import { validate } from '../../../application/middlewares/validate';
 
 const router = Router();
 

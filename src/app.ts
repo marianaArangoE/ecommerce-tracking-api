@@ -1,5 +1,5 @@
 import express from 'express';
-import usersRoutes from './modules/users/routes';
+import usersRoutes from './domain/models/users/routes';
 // import productsRoutes from './modules/products/routes';
 // import ordersRoutes from './modules/orders/routes';
 // import shipmentsRoutes from './modules/shipments/routes';
