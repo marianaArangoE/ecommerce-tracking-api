@@ -1,7 +1,10 @@
 // src/server.ts
 import { app } from './app';
+import { boomErrorHandler, genericErrorHandler } from './application/middlewares/errorHandle';
 
 const PORT = Number(process.env.PORT ?? 3000);
+app.use(boomErrorHandler)
+app.use(genericErrorHandler)
 const server = app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });
