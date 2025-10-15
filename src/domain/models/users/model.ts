@@ -1,6 +1,6 @@
 export type UserRole = 'admin' | 'customer';
 import { UserSchema } from './schema';
-import { model, Types } from 'mongoose';
+import { model } from 'mongoose';
 export interface Address { 
   id: string; 
   city: string; 
@@ -18,6 +18,12 @@ export interface User {
   role: UserRole; 
   addresses?: Address[];
 }
-UserSchema.virtual('id').get(function (this: { _id: Types.ObjectId }) { return this._id.toHexString(); });
+UserSchema.virtual('id').get(function (this: any) {
+  const id = this._id;
+  if (typeof id === 'string') return id;
+  if (id && typeof id.toHexString === 'function') return id.toHexString();
+  return id?.toString?.() || id;
+});
+
 UserSchema.set('toJSON', { virtuals: true }); UserSchema.set('toObject', { virtuals: true });
 export const UserModel = model<User>('User', UserSchema);

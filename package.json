@@ -12,13 +12,16 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
     "express": "^5.1.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express-validator": "^7.2.1",
     "mongoose": "^8.18.2",

@@ -8,6 +8,7 @@ export const AddressSchema = new Schema({
 }, { _id: false });
 
 export const UserSchema = new Schema({
+  _id :            { type: String, required: true},
   email:         { type: String, required: true, unique: true },
   passwordHash:  { type: String, required: true },
   name:          { type: String, required: true },
