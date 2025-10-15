@@ -17,6 +17,9 @@ export interface User {
   createdAt: string; 
   role: UserRole; 
   addresses?: Address[];
+  failedLoginCount?: number;
+  lockUntil?: Date | null;
+  refreshTokens?: { token: string; expiresAt: Date }[];
 }
 UserSchema.virtual('id').get(function (this: any) {
   const id = this._id;

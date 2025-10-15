@@ -17,4 +17,13 @@ export const UserSchema = new Schema({
   createdAt:     { type: String, required: true },
   role:          { type: String, enum: ['admin','customer'], required: true },
   addresses:     { type: [AddressSchema], default: [] },
+
+
+  failedLoginCount: { type: Number, default: 0 },
+  lockUntil:        { type: Date, default: null },
+
+  refreshTokens: [{
+    token:     { type: String, required: true },
+    expiresAt: { type: Date, required: true }
+  }]
 }, { versionKey: false });
