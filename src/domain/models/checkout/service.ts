@@ -5,11 +5,38 @@ import { UserModel } from '../users/model';
 
 const nowISO = () => new Date().toISOString();
 
-function calcShippingCents(subtotalCents: number, method: 'standard'|'express') {
-  if (subtotalCents >= 50000) return 0;          // envío gratis ≥ 50.000
-  return method === 'express' ? 18000 : 12000;   // tarifa simple
+function totalWeightKgOfItems(items: Array<{ productId:string; quantity:number }>, productsById: Map<string, any>) {
+  let w = 0;
+  for (const it of items) {
+    const p = productsById.get(it.productId);
+    const unit = Number(p?.weight ?? 1); // 1kg por defecto si no hay weight
+    w += unit * it.quantity;
+  }
+  return Math.max(0, w);
 }
+// Estimador simple de distancia según city/postal 
+// - mismo city → 5km
+// - prefijo postal igual (primeros 2 dígitos) → 20km
+// - caso general → 50km
+function estimateDistanceKm(address: { city:string; postalCode:string }, warehouse = { city: 'Medellín', postalCode: '050001' }) {
+  const sameCity = address.city.trim().toLowerCase() === warehouse.city.trim().toLowerCase();
+  if (sameCity) return 5;
+  const preA = String(address.postalCode || '').slice(0,2);
+  const preW = String(warehouse.postalCode || '').slice(0,2);
+  if (preA && preW && preA === preW) return 20;
+  return 50;
+}
+function calcShippingCentsByWD(subtotalCents: number, totalWeightKg: number, distanceKm: number, method: 'standard'|'express') {
+  if (subtotalCents >= 50000) return 0; // (iv)
 
+  const base = 7000;                      // base
+  const perKg = 1200 * Math.max(1, totalWeightKg);
+  const perKm = 120 * Math.max(1, distanceKm);
+  const methodAdj = method === 'express' ? 1.4 : 1.0;
+
+  const raw = Math.round((base + perKg + perKm) * methodAdj);
+  return Math.max(4000, raw);             // mínimo operativo
+}
 async function buildItemsFromCart(userId: string) {
   const cart: any = await CartModel.findOne({ userId }).lean();
   if (!cart || !cart.items?.length) throw new Error('El carrito está vacío');
@@ -48,10 +75,20 @@ export async function createCheckout(params: {
   // 2) confirmar items + verificación final de stock/estado
   const snap = await buildItemsFromCart(userId);
 
-  // 3) calcular envío y total
-  const shippingCents = calcShippingCents(snap.subtotalCents, shippingMethod);
-  const grandTotalCents = snap.subtotalCents + shippingCents;
+const pids = snap.items.map(i => i.productId);
+const prods = await ProductModel.find({ _id: { $in: pids } }, { _id:1, weight:1 }).lean();
+const mapProds = new Map(prods.map(p => [String(p._id), p]));
 
+// peso total (kg) y distancia estimada (km)
+const totalWeightKg = totalWeightKgOfItems(
+  snap.items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+  mapProds
+);
+const distanceKm = estimateDistanceKm(address);
+
+// costo de envío por peso/distancia + método (mantiene envío gratis si aplica)
+const shippingCents = calcShippingCentsByWD(snap.subtotalCents, totalWeightKg, distanceKm, shippingMethod);
+const grandTotalCents = snap.subtotalCents + shippingCents;
   // 4) crear checkout (con snapshot de address)
   const payload = {
     userId,

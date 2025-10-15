@@ -1,10 +1,11 @@
 import { model, Types, Document } from 'mongoose';
 import { OrderSchema } from './schema';
-export type OrderStatus = 'created' | 'processing' | 'completed' | 'cancelled';
+export type OrderStatus = 'PENDIENTE' | 'PROCESANDO' | 'COMPLETADA' | 'CANCELADA';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type ShippingStatus = 'not_started' | 'in_transit' | 'delivered';
 export interface Order {
   id: string;
+  orderId: string;
   userId: string;
   checkoutId: string;
   items: OrderItem[];         

@@ -1,6 +1,6 @@
 import { model, Types } from 'mongoose';
 import { CartSchema } from './schema';
-
+export type Currency = 'COP' | 'USD';
 export interface CartItem {
   productId: string;
   sku: string;
@@ -9,6 +9,7 @@ export interface CartItem {
   quantity: number;
   unitPriceCents: number;
   totalCents: number;
+  priceLockUntil?: Date;
 }
 
 export interface Cart {
@@ -16,6 +17,7 @@ export interface Cart {
   currency: string;
   items: CartItem[];
   subtotalCents: number;
+  status: 'active' | 'closed';
   createdAt: string;
   updatedAt: string;
 }
