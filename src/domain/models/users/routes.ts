@@ -5,39 +5,28 @@ import { requireAuth, AuthReq } from '../../../application/middlewares/auth';
 import * as UserSvc from './service';
 
 const router = Router();
+
 const strongPwd = body('password')
   .isLength({ min: 8 }).withMessage('password mínimo 8')
   .matches(/[a-z]/).withMessage('password requiere minúscula')
   .matches(/[A-Z]/).withMessage('password requiere mayúscula')
   .matches(/\d/).withMessage('password requiere número');
-/* ==================== LOGIN ==================== */
+
+
+// LOGIN
 router.post(
   '/login',
   [
-    body('identifier').notEmpty().withMessage('identifier requerido (email o cc)'),
-    // ⚠️ no usamos .isLength() en password; evitamos 400 y devolvemos 401 genérico
+    body('identifier').notEmpty().withMessage('Datos requeridos, inicia sesion con email o cc'),
   ],
-  validate,
+validate,
   async (req: Request, res: Response) => {
     try {
-      const identifier = String(req.body.identifier ?? '').trim();
-      const password = typeof req.body.password === 'string' ? req.body.password : '';
-
-      // si falta password o viene vacía -> mismo mensaje
-      if (!password) {
-        return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
-      }
-
+      const { identifier, password } = req.body;
       const result = await UserSvc.login({ identifier, password });
       return res.json(result);
     } catch (e: any) {
-      // mantenemos códigos específicos cuando aplican (ej. 423 ACCOUNT_LOCKED)
-      const status = e.status ?? 401;
-      const error =
-        e.message === 'INVALID_CREDENTIALS' || !e.message
-          ? 'INVALID_CREDENTIALS'
-          : e.message; // p.ej. ACCOUNT_LOCKED
-      return res.status(status).json({ error, unlockAt: e.unlockAt });
+      return res.status(e.status || 401).json({ error: e.message || 'INVALID_CREDENTIALS' });
     }
   }
 );
@@ -46,50 +35,52 @@ router.post(
   '/refresh',
   [body('refreshToken').notEmpty().withMessage('refreshToken requerido')],
   validate,
-  async (req: Request, res: Response) => {
+async (req: Request, res: Response) => {
     try {
-      const out = await UserSvc.refresh(req.body.refreshToken);
-      res.json(out);
-    } catch (e:any) {
+      const nuevosTokens = await UserSvc.refresh(req.body.refreshToken);
+      res.json(nuevosTokens);
+
+    } catch (e: any) {
       res.status(e.status || 400).json({ error: e.message || 'REFRESH_ERROR' });
     }
   }
 );
 
-// LOGOUT (revocar refresh) – puedes exigir requireAuth si quieres
+// LOGOUT 
+// invalida el refresh token, ya no se podrá usar para refresh
 router.post(
   '/logout',
   [body('refreshToken').notEmpty().withMessage('refreshToken requerido')],
   validate,
-  async (req: AuthReq, res: Response) => {
+async (req: AuthReq, res: Response) => {
     try {
-      const out = await UserSvc.logout(req.user?.sub ?? req.body.userId, req.body.refreshToken);
-      res.json(out);
-    } catch (e:any) {
+      //se verifica el user que viene en el token y el del body
+      const resultado = await UserSvc.logout(req.user?.sub ?? req.body.userId, req.body.refreshToken);
+      res.json(resultado);
+      
+    } catch (e: any) {
       res.status(e.status || 400).json({ error: e.message || 'LOGOUT_ERROR' });
     }
   }
 );
 
-/* ==================== LISTAR USUARIOS ==================== */
-router.get('/', async (_req: Request, res: Response) => {
-  const out = await UserSvc.list();
-  return res.json(out);
-});
 
 // LISTAR direcciones del usuario
-//
-router.get('/me/addresses', requireAuth, async (req: AuthReq, res: Response) => {
+router.get(
+  '/me/addresses', 
+  requireAuth, async (req: AuthReq, res: Response) => {
   const addresses = await UserSvc.getAddresses(req.user!.sub);
   res.json({ addresses });
 });
 
-/* ==================== PERFIL ==================== */
-router.get('/me', requireAuth, async (req: AuthReq, res: Response) => {
+// Ver Perfil
+router.get(
+  '/me', 
+  requireAuth, async (req: AuthReq, res: Response) => {
   const me = await UserSvc.getMe(req.user!.sub);
   res.json(me);
 });
-
+// Actualizar perfil
 router.patch(
   '/me',
   requireAuth,
@@ -103,7 +94,7 @@ router.patch(
     res.json(me);
   }
 );
-
+// agregar la dirección al usuario
 router.post(
   '/me/addresses',
   requireAuth,
@@ -120,12 +111,11 @@ router.post(
   }
 );
 // ACTUALIZAR dirección por id
-//
 router.patch(
   '/me/addresses/:id',
   requireAuth,
   [
-    param('id').notEmpty(),
+    param('id').notEmpty().withMessage('El ID de la dirección en la URL es requerido'),
     body('city').optional().isString(),
     body('postalCode').optional().isString(),
     body('address').optional().isString(),
@@ -133,21 +123,19 @@ router.patch(
   validate,
   async (req: AuthReq, res: Response) => {
     try {
-      const addr = await UserSvc.updateAddress(req.user!.sub, req.params.id, {
-        city: req.body.city,
-        postalCode: req.body.postalCode,
-        address: req.body.address,
-      });
+const addr = await UserSvc.updateAddress(req.user!.sub,req.params.id,req.body );
       res.json({ address: addr });
     } catch (e:any) {
       res.status(e.status || 400).json({ error: e.message || 'ADDRESS_UPDATE_ERROR' });
     }
   }
 );
+
+//eliminar dirección por id
 router.delete(
   '/me/addresses/:id',
   requireAuth,
-  [param('id').notEmpty()],
+ [param('id').notEmpty().withMessage('El ID de la dirección es requerido en la URL')],
   validate,
   async (req: AuthReq, res: Response) => {
     try {
@@ -159,15 +147,15 @@ router.delete(
   }
 );
 
-/* ==================== REGISTRO ==================== */
+// registrar usuario nuevo
 router.post(
   '/register',
   [
-    body('cc').notEmpty().withMessage('cc requerida'),
-    body('email').isEmail().withMessage('email inválido'),
-    strongPwd,  // 👈 política fuerte
-    body('name').notEmpty().withMessage('name requerido'),
-    body('role').isIn(['admin', 'customer']).withMessage('role debe ser admin o customer'),
+    body('cc').notEmpty().withMessage('La cédula es requerida'),
+    body('email').isEmail().withMessage('El formato del email es inválido'),
+    strongPwd,
+    body('name').notEmpty().withMessage('El nombre es requerido'),
+    body('role').isIn(['admin', 'customer']).withMessage('El rol debe ser admin o customer'),
   ],
   validate,
   async (req: Request, res: Response) => {
@@ -183,26 +171,6 @@ router.post(
       res.status(201).json(user);
     } catch (e: any) {
       res.status(e.status || 400).json({ error: e.message || 'REGISTER_ERROR' });
-    }
-  }
-);
-
-/* ==================== OBTENER POR ID (AL FINAL) ==================== */
-// validamos que sea numérico
-router.get(
-  '/:id',
-  [
-    param('id')
-      .isInt().withMessage('id debe ser numérico')  // asegura que sea CC numérica
-      .bail()
-  ],
-  validate,
-  async (req: Request, res: Response) => {
-    try {
-      const u = await UserSvc.getById(req.params.id);
-      res.json(u);
-    } catch (e: any) {
-      res.status(e.status || 404).json({ error: e.message || 'USER_NOT_FOUND' });
     }
   }
 );
