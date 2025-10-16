@@ -9,7 +9,14 @@ const getAllProducts = async (
   next: NextFunction
 ) => {
   try {
-    res.send(await productService.getAllProducts());
+    const { role } = req["user"];
+    console.log(role);
+    if (role == "admin") {
+      res.send(await productService.getAllProducts());
+    }
+    if (role == "customer") {
+      res.send(await productService.getAllProductsCustomer());
+    }
   } catch (error) {
     next(error);
   }
@@ -21,8 +28,16 @@ const getByIdProduct = async (
   next: NextFunction
 ) => {
   try {
-    const {id} = req.params;
-    res.send(await productService.getByIdProduct(String(id)));
+    const { id } = req.params;
+    //res.send(await productService.getByIdProduct(String(id)));
+
+    const { role } = req["user"];
+    if (role == "admin") {
+      res.send(await productService.getByIdProduct(String(id)));
+    }
+    if (role == "customer") {
+      res.send(await productService.getByIdProductCustomer(String(id)));
+    }
   } catch (error) {
     next(error);
   }

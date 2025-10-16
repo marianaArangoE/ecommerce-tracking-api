@@ -1,9 +1,9 @@
 import Joi from "joi";
 
 const id = Joi.string();
-const sku = Joi.string().alphanum().min(8).max(20).required().messages({
+const sku = Joi.string().alphanum().min(8).max(20).messages({
   "string.base": "El SKU debe ser un texto alfanumérico, osea solo [aZ]/[09]",
-  "string.alphanum": "Nada de simbolos especiales",
+  "string.alphanum": "Nada de simbolos especiales, en el SKU Rey",
   "string.min": "El SKU debe tener al menos 8 caracteres",
   "string.max": "El SKU no puede superar los 20 caracteres",
 });
@@ -12,7 +12,6 @@ const description = Joi.string().optional();
 const priceCents = Joi.number()
   .precision(2) // máximo 2 decimales
   .positive()
-  .required()
   .messages({
     "number.base": "Solo numeros pls",
     "number.positive": "Mas de cero, ni modo sea gratis",
@@ -23,7 +22,6 @@ const currency = Joi.string()
   .length(3)
   .uppercase()
   .valid("COP", "USD", "EUR", "MXN")
-  .required()
   .messages({
     "any.only": "La moneda debe ser una de: COP, USD, EUR o MXN, sino de malas",
   });

@@ -21,6 +21,27 @@ const getByIdProduct = async (idProduct: string) => {
   }
 };
 
+const getAllProductsCustomer = async () => {
+  const result = await ProductModel.find({ stock: { $gt: 0 } });
+  if (!result) {
+    throw Boom.notFound(`products not found`);
+  } else {
+    return result;
+  }
+};
+
+const getByIdProductCustomer = async (idProduct: string) => {
+  const result = await ProductModel.findOne({
+    id: idProduct,
+    stock: { $gt: 0 },
+  });
+  if (!result) {
+    throw Boom.notFound(`product id ${idProduct}, not found  `);
+  } else {
+    return result;
+  }
+};
+
 const createProduct = async (data: ProductCreate) => {
   const newProduct = await ProductModel.create({ ...data });
   return newProduct;
@@ -52,6 +73,8 @@ const deleteProduct = async (id: string) => {
 export const productService = {
   getAllProducts,
   getByIdProduct,
+  getAllProductsCustomer,
+  getByIdProductCustomer,
   createProduct,
   updateProduct,
   deleteProduct,
