@@ -2,8 +2,14 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 import { connectMongo } from './infrastructure/config/mongoDB';
 import { app } from './app';
+import { boomErrorHandler, genericErrorHandler, mongoErrorHandler } from './application/middlewares/errorHandle';
 
 const PORT = Number(process.env.PORT) || 3000;
+
+app.use(boomErrorHandler)
+app.use(mongoErrorHandler);
+app.use(genericErrorHandler)
+
 const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ecommerce';
 
 
