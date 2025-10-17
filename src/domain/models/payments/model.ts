@@ -15,6 +15,7 @@ export interface PaymentMethod {
 
 export interface PaymentIntent {
   _id: Types.ObjectId;
+  id?: string;
   userId: string;
   orderId: string;
   amountCents: number;

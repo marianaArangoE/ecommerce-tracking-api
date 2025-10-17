@@ -14,18 +14,16 @@ export interface CartItem {
 
 export interface Cart {
   userId: string;
-  currency: string;
+  currency: Currency;
   items: CartItem[];
   subtotalCents: number;
   status: 'active' | 'closed';
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 CartSchema.virtual('id').get(function (this: { _id: Types.ObjectId }) {
   return this._id.toHexString();
 });
-CartSchema.set('toJSON', { virtuals: true });
-CartSchema.set('toObject', { virtuals: true });
 
 export const CartModel = model<Cart>('Cart', CartSchema);

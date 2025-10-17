@@ -22,15 +22,18 @@ import {
 export async function confirmOrder(params: { userId: string; checkoutId: string; email: string }) {
   const { userId, checkoutId, email } = params;
 
-  const ck = await CheckoutModel.findOne({ _id: checkoutId, userId });
-  if (!ck) throw new Error('Checkout no encontrado');
-  if (ck.status && ck.status !== 'pending') {
-    throw new Error(`Checkout no está pendiente (estado actual: ${ck.status})`);
-  }
+const ck = await CheckoutModel.findOne({ _id: checkoutId, userId });
+if (!ck) throw new Error('Checkout no encontrado');
 
-  // Idempotencia: si ya hay orden para este checkout, devolverla
-  const existing = await OrderModel.findOne({ checkoutId: ck.id }).lean();
-  if (existing) return existing;
+// ✅ Idempotencia primero: si ya existe la orden para este checkout, devuélvela.
+const existing = await OrderModel.findOne({ checkoutId: ck.id }).lean();
+if (existing) return existing;
+
+// Luego sí valida que el checkout siga pendiente
+if (ck.status && ck.status !== 'pending') {
+  throw new Error(`Checkout no está pendiente (estado actual: ${ck.status})`);
+}
+
 
   // Verifica stock y reserva (descuento de inventario)
   await verifyAndReserve(ck.items.map(i => ({ productId: i.productId, quantity: i.quantity })));
