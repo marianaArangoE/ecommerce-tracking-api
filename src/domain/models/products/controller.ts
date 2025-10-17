@@ -10,7 +10,6 @@ const getAllProducts = async (
 ) => {
   try {
     const { role } = req["user"];
-    console.log(role);
     if (role == "admin") {
       res.send(await productService.getAllProducts());
     }

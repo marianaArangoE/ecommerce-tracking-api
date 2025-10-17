@@ -10,14 +10,44 @@ const sku = Joi.string().alphanum().min(8).max(20).messages({
 const name = Joi.string();
 const description = Joi.string().optional();
 const priceCents = Joi.number()
-  .precision(2) // máximo 2 decimales
   .positive()
+  .custom((value, helpers) => {
+    if (!Number.isFinite(value)) {
+      return helpers.error("number.base");
+    }
+
+    // 1) comprobar decimales: value * 100 debe ser (prácticamente) entero
+    const multiplied = value * 100;
+    // tolerancia para evitar problemas por imprecisión de float
+    const diff = Math.abs(multiplied - Math.round(multiplied));
+    if (diff > 1e-8) {
+      return helpers.error("number.precision", { limit: 2 });
+    }
+
+    // 2) comprobar cantidad máxima de dígitos en la parte entera (ej: 8)
+    const integerPartLength = Math.trunc(Math.abs(value)).toString().length;
+    const MAX_INTEGER_DIGITS = 8;
+    if (integerPartLength > MAX_INTEGER_DIGITS) {
+      return helpers.error("number.maxDigits", { limit: MAX_INTEGER_DIGITS });
+    }
+
+    return value;
+  })
   .messages({
-    "number.base": "Solo numeros pls",
-    "number.positive": "Mas de cero, ni modo sea gratis",
-    "number.precision":
-      "Se como validar para que solo entren 2, pero no para que solo se vean 2",
+    "number.base": "El precio debe ser un número válido.",
+    "number.positive": "El precio debe ser mayor que cero.",
+    "number.precision": "El precio solo puede tener hasta 2 decimales (ej: 1234.56).",
+    "number.maxDigits": "La parte entera no puede tener más de {{#limit}} dígitos.",
   });
+
+/*
+.string()
+  .pattern(/^\d{1,8}(\.\d{1,2})?$/)
+  .messages({
+    "string.pattern.base": "El precio debe tener máximo 8 dígitos enteros y 2 decimales (ej: 99999999.99)",
+  })
+  .custom((value, helpers) => parseFloat(value));
+  */
 const currency = Joi.string()
   .length(3)
   .uppercase()

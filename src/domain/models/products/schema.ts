@@ -1,4 +1,4 @@
-import { Schema } from 'mongoose';
+import mongoose,{ Schema } from "mongoose";
 
 export const ProductSchema = new Schema(
   {
@@ -6,7 +6,13 @@ export const ProductSchema = new Schema(
     sku: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     description: { type: String },
-    priceCents: { type: Number, required: true },
+    priceCents: {
+    type: mongoose.Schema.Types.Decimal128,
+    required: true,
+    //get: (v) => parseFloat(v.toString()), // convierte a número legible
+    //set: (v) => mongoose.Types.Decimal128.fromString(v.toString())
+    get: (v) => (v ? parseFloat(v.toString()) : null) 
+  },
     currency: { type: String, required: true },
     stock: { type: Number, required: true, min: 0 },
     status: {
@@ -23,6 +29,8 @@ export const ProductSchema = new Schema(
   {
     timestamps: true, // Crea automáticamente createdAt y updatedAt
     versionKey: false, // Elimina el campo "__v"
+    toJSON: { getters: true }, // <-- activa los getters en las respuestas JSON
+    toObject: { getters: true },
   }
 );
 

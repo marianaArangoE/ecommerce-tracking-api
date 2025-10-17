@@ -22,7 +22,7 @@ const getByIdProduct = async (idProduct: string) => {
 };
 
 const getAllProductsCustomer = async () => {
-  const result = await ProductModel.find({ stock: { $gt: 0 } });
+  const result = await ProductModel.find({ stock: { $gt: 0 }, status: "active" });
   if (!result) {
     throw Boom.notFound(`products not found`);
   } else {
