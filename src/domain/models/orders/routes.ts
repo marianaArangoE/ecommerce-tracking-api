@@ -1,39 +1,32 @@
 import { Router } from 'express';
-import { isValidObjectId } from 'mongoose';
 import { confirmOrder, getMyOrder, listMyOrders } from './service';
+import { requireCustomerWithVerifiedEmail, AuthReq } from '../../../application/middlewares/auth';
 
 const router = Router();
 
-router.use((req, res, next) => {
-  const uid = String(req.headers['x-user-id'] || '');
-  if (!isValidObjectId(uid)) return res.status(401).json({ error: 'x-user-id inválido' });
-  (req as any).userId = uid;
-  next();
-});
-
 // POST /api/v1/orders/confirm { checkoutId, email }
-router.post('/confirm', async (req, res) => {
+router.post('/confirm', requireCustomerWithVerifiedEmail, async (req: AuthReq, res) => {
   try {
     const { checkoutId, email } = req.body || {};
     if (!checkoutId || !email) return res.status(400).json({ error: 'checkoutId y email son requeridos' });
-    const order = await confirmOrder({ userId: (req as any).userId, checkoutId, email });
+    const order = await confirmOrder({ userId: req.user!.sub, checkoutId, email });
     res.status(201).json(order);
   } catch (e:any) { res.status(400).json({ error: e.message }); }
 });
 
 // GET /api/v1/orders/:orderId (solo del propio usuario)
-router.get('/:orderId', async (req, res) => {
+router.get('/:orderId', requireCustomerWithVerifiedEmail, async (req: AuthReq, res) => {
   try {
-    const data = await getMyOrder((req as any).userId, req.params.orderId);
+    const data = await getMyOrder(req.user!.sub, req.params.orderId);
     res.json(data);
   } catch (e:any) { res.status(404).json({ error: e.message }); }
 });
 
 // GET /api/v1/orders?status=PENDIENTE (listado propio)
-router.get('/', async (req, res) => {
+router.get('/', requireCustomerWithVerifiedEmail, async (req: AuthReq, res) => {
   try {
     const status = req.query.status as any;
-    const data = await listMyOrders((req as any).userId, status);
+    const data = await listMyOrders(req.user!.sub, status);
     res.json(data);
   } catch (e:any) { res.status(400).json({ error: e.message }); }
 });

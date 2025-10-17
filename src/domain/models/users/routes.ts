@@ -187,6 +187,83 @@ router.post(
   }
 );
 
+/* ==================== VERIFICACIÓN DE EMAIL ==================== */
+// Verificar email con token (POST para API)
+router.post(
+  '/verify-email',
+  [
+    body('token').notEmpty().withMessage('token requerido'),
+  ],
+  validate,
+  async (req: Request, res: Response) => {
+    try {
+      const user = await UserSvc.verifyEmail(req.body.token);
+      res.json({ message: 'Email verificado exitosamente', user });
+    } catch (e: any) {
+      res.status(e.status || 400).json({ error: e.message || 'VERIFICATION_ERROR' });
+    }
+  }
+);
+
+// Verificar email con token (GET para enlaces del navegador)
+router.get(
+  '/verify-email',
+  async (req: Request, res: Response) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h2 style="color: #e74c3c;">❌ Error de Verificación</h2>
+              <p>Token de verificación no válido o faltante.</p>
+              <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="color: #007bff;">Volver al inicio</a></p>
+            </body>
+          </html>
+        `);
+      }
+
+      const user = await UserSvc.verifyEmail(token);
+      
+      return res.status(200).send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2 style="color: #27ae60;">✅ ¡Email Verificado!</h2>
+            <p>Tu email <strong>${user.email}</strong> ha sido verificado exitosamente.</p>
+            <p>Ahora puedes realizar compras en nuestra plataforma.</p>
+            <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Continuar</a></p>
+          </body>
+        </html>
+      `);
+    } catch (e: any) {
+      return res.status(e.status || 400).send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2 style="color: #e74c3c;">❌ Error de Verificación</h2>
+            <p>${e.message === 'INVALID_OR_EXPIRED_TOKEN' ? 'El token ha expirado o no es válido.' : 'Error al verificar el email.'}</p>
+            <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="color: #007bff;">Volver al inicio</a></p>
+          </body>
+        </html>
+      `);
+    }
+  }
+);
+
+// Reenviar email de verificación
+router.post(
+  '/resend-verification',
+  requireAuth,
+  async (req: AuthReq, res: Response) => {
+    try {
+      const result = await UserSvc.resendVerificationEmail(req.user!.sub);
+      res.json(result);
+    } catch (e: any) {
+      res.status(e.status || 400).json({ error: e.message || 'RESEND_ERROR' });
+    }
+  }
+);
+
 /* ==================== OBTENER POR ID (AL FINAL) ==================== */
 // validamos que sea numérico
 router.get(

@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';            // o 'bcryptjs' si prefieres
 import jwt from 'jsonwebtoken';
 import { UserModel } from './model';
+import { generateVerificationToken, sendVerificationEmail } from '../../services/emailService';
 
 const ROUNDS = 10;
 const ACCESS_TTL = '15m';
@@ -64,6 +65,14 @@ export async function register(input: RegisterInput) {
     lockUntil: null,
     refreshTokens: [],
   });
+
+  // Enviar email de verificación después del registro
+  try {
+    await generateAndSendVerificationToken(user._id);
+  } catch (error) {
+    console.error('Error enviando email de verificación:', error);
+    // No fallar el registro si el email falla
+  }
 
   return toPublic(user);
 }
@@ -245,4 +254,76 @@ export async function removeAddress(userId: string, addrId: string) {
   }
   await u.save();
   return (u.addresses ?? []);
+}
+
+/** Verificar email con token */
+export async function verifyEmail(token: string) {
+  const user = await UserModel.findOne({
+    emailVerificationToken: token,
+    emailVerificationExpires: { $gt: new Date() }
+  });
+
+  if (!user) {
+    const e:any = new Error('INVALID_OR_EXPIRED_TOKEN');
+    e.status = 400;
+    throw e;
+  }
+
+  user.emailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpires = undefined;
+  await user.save();
+
+  return toPublic(user);
+}
+
+/** Reenviar email de verificación */
+export async function resendVerificationEmail(userId: string) {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    const e:any = new Error('USER_NOT_FOUND');
+    e.status = 404;
+    throw e;
+  }
+
+  if (user.emailVerified) {
+    const e:any = new Error('EMAIL_ALREADY_VERIFIED');
+    e.status = 400;
+    throw e;
+  }
+
+  // Generar nuevo token
+  const verificationToken = generateVerificationToken();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+  user.emailVerificationToken = verificationToken;
+  user.emailVerificationExpires = expiresAt;
+  await user.save();
+
+  // Enviar email
+  await sendVerificationEmail(user.email, user.name, verificationToken);
+
+  return { message: 'Verification email sent successfully' };
+}
+
+/** Generar y enviar token de verificación (para registro) */
+export async function generateAndSendVerificationToken(userId: string) {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    const e:any = new Error('USER_NOT_FOUND');
+    e.status = 404;
+    throw e;
+  }
+
+  const verificationToken = generateVerificationToken();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+  user.emailVerificationToken = verificationToken;
+  user.emailVerificationExpires = expiresAt;
+  await user.save();
+
+  // Enviar email
+  await sendVerificationEmail(user.email, user.name, verificationToken);
+
+  return { message: 'Verification email sent successfully' };
 }

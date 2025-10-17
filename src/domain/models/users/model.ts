@@ -14,6 +14,8 @@ export interface User {
   name: string; 
   phone?: string;
   emailVerified: boolean; 
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
   createdAt: string; 
   role: UserRole; 
   addresses?: Address[];
