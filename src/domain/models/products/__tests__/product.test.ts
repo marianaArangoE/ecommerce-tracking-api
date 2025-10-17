@@ -9,7 +9,7 @@ describe("productSchema (Joi) validations", () => {
     id: "prod_1",
     sku: "SKU12345",
     name: "Camisa",
-    priceCents: 1999, // número válido (sin decimales problemáticos)
+    priceCents: 1999, // número válido (sin decimales problemáticos, sigo con traumas)
     currency: "COP",
     stock: 10,
     status: "active",

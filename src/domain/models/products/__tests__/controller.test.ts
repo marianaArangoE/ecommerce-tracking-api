@@ -1,4 +1,3 @@
-// Mock the service before importing controller
 jest.mock(
   "../service",
   () => ({

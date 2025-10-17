@@ -3,7 +3,9 @@ import { productRouter } from "../routes";
 describe("productRouter", () => {
   it("exporta las rutas esperadas con los métodos correctos", () => {
     // extraer solo las capas que representan rutas
-    const layers: any[] = (productRouter as any).stack.filter((s: any) => s.route);
+    const layers: any[] = (productRouter as any).stack.filter(
+      (s: any) => s.route
+    );
 
     const routes = layers.map((l: any) => ({
       path: l.route.path,
@@ -20,7 +22,6 @@ describe("productRouter", () => {
       ])
     );
 
-    // Opcional: asegurar número de rutas
     expect(routes.length).toBeGreaterThanOrEqual(5);
   });
 });

@@ -1,7 +1,7 @@
 import { Response, Request, NextFunction } from "express";
 import { productService } from "./service";
 import { ProductCreate, ProductUpdate } from "./model";
-import { log } from "console";
+
 
 const getAllProducts = async (
   req: Request,
