@@ -1,4 +1,5 @@
-import mongoose,{ Schema } from "mongoose";
+import mongoose, { Schema, model, models, Types } from "mongoose";
+
 
 export const ProductSchema = new Schema(
   {
@@ -33,6 +34,8 @@ export const ProductSchema = new Schema(
     toObject: { getters: true },
   }
 );
+
+export const ProductModel = models.Product || model("Product", ProductSchema);
 
 // const ProductSchema = new Schema({
 //   sku:        { type: String, required: true, unique: true },
