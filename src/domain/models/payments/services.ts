@@ -1,15 +1,12 @@
-// src/domain/models/payments/services.ts
+
 import crypto from 'crypto';
 import { PaymentMethodModel, PaymentIntentModel } from './model';
 import { OrderModel } from '../orders/model';
 
-// util local
 const nowISO = () => new Date().toISOString();
 const newId = (p: string) => `${p}_${crypto.randomBytes(8).toString('hex')}`;
 const newToken = () => 'tok_' + crypto.randomBytes(12).toString('hex');
-
-/* =============== MÉTODOS DE PAGO (del usuario) =============== */
-
+//usuarios y sus metodos de pago
 export async function listMyMethods(userId: string) {
   return PaymentMethodModel.find({ userId })
     .sort({ isDefault: -1, createdAt: -1 })
@@ -19,7 +16,7 @@ export async function listMyMethods(userId: string) {
 export async function addMethod(userId: string, input: {
   type: 'credit_card'|'debit_card'|'paypal'|'transfer'|'cash_on_delivery';
   provider?: string;
-  cardNumber?: string;     // solo para generar last4/token mock
+  cardNumber?: string;    // esto es solo para mockear una tarjeta
   setDefault?: boolean;
 }) {
   let last4: string | undefined;
@@ -76,8 +73,7 @@ export async function getDefaultMethod(userId: string) {
   return PaymentMethodModel.findOne({ userId, isDefault: true }).lean();
 }
 
-/* =============== PAYMENT INTENTS / PAGOS =============== */
-
+//crear el pago para una orden
 type Method = 'card'|'transfer'|'cod';
 
 export async function createPaymentIntent(params: {
@@ -94,11 +90,9 @@ export async function createPaymentIntent(params: {
   if (!ord) { const e:any = new Error('ORDER_NOT_FOUND'); e.status = 404; throw e; }
   if (ord.status !== 'PENDIENTE') { const e:any = new Error('ORDER_NOT_PENDING'); e.status = 400; throw e; }
 
-  // Idempotencia: si ya hay intent para esta orden/usuario → devolver
+ 
   const existing = await PaymentIntentModel.findOne({ orderId, userId }).lean();
   if (existing) return existing;
-
-  // Resolver método y provider según paymentMethod guardado (si viene)
   let resolved: Method = params.method || 'card';
   let provider = params.provider;
   let paymentMethodId = params.paymentMethodId;
@@ -137,7 +131,7 @@ export async function createPaymentIntent(params: {
     const doc = await PaymentIntentModel.create({
       ...base,
       status: 'pending',
-      ref: newId('ref'), // referencia de transferencia
+      ref: newId('ref'),
     });
     return doc.toJSON();
   }

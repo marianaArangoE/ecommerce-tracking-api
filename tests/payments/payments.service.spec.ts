@@ -1,4 +1,4 @@
-// tests/payments/payments.service.spec.ts
+
 import { connect, close, clear } from '../setupMongo';
 import * as CartSvc from '../../src/domain/models/shippingCart/service';
 import * as CheckoutSvc from '../../src/domain/models/checkout/service';
@@ -8,7 +8,7 @@ import { ensureCustomerBase, createProduct } from '../factories';
 import { PaymentIntentModel } from '../../src/domain/models/payments/model';
 import { OrderModel } from '../../src/domain/models/orders/model';
 
-// Mocks de helpers de orders (para confirmOrder)
+
 jest.mock('../../src/domain/services/services', () => ({
   verifyAndReserve: jest.fn().mockResolvedValue(true),
   genOrderId: jest.fn().mockReturnValue('ORD-UT-PAY'),
@@ -129,7 +129,6 @@ describe('Payments Service', () => {
     });
     const ord = await OrdersSvc.confirmOrder({ userId: 'U5', checkoutId: chk.id, email: 'c@demo.com' });
 
-    // normalmente crearías el intent vía endpoint; aquí lo forzamos directo:
     await PaymentIntentModel.create({
       userId: 'U5',
       orderId: ord.orderId,
