@@ -4,7 +4,7 @@ import { requireCustomerWithVerifiedEmail, AuthReq } from '../../../application/
 
 const router = Router();
 
-// POST /api/checkout  { addressId, shippingMethod, paymentMethod }
+// POST /api/checkout
 router.post('/', requireCustomerWithVerifiedEmail, async (req: AuthReq, res) => {
   try {
     const userId = req.user!.sub;

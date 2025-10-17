@@ -5,13 +5,7 @@ import { validate } from '../../../application/middlewares/validate';
 import * as Svc from './services'; 
 
 const router = Router();
-
-/* =========================
-   MÉTODOS DE PAGO (cliente)
-   Base: /api/v1/payments
-   ========================= */
-
-/** GET /api/v1/payments/methods */
+// todas las rutas requieren auth y rol customer o admin
 router.get(
   '/methods',
   requireAuth,
@@ -21,8 +15,7 @@ router.get(
     res.json({ items, total: items.length });
   }
 );
-
-/** POST /api/v1/payments/methods  (crear y opcionalmente dejar por defecto) */
+//añadir metodo de pago
 router.post(
   '/methods',
   requireAuth,
@@ -47,7 +40,7 @@ router.post(
   }
 );
 
-/** POST /api/v1/payments/methods/:id/default */
+//establecer metodo por defecto
 router.post(
   '/methods/:id/default',
   requireAuth,
@@ -62,7 +55,7 @@ router.post(
   }
 );
 
-/** DELETE /api/v1/payments/methods/:id */
+//eliminar metodo de pago
 router.delete(
   '/methods/:id',
   requireAuth,
@@ -78,11 +71,7 @@ router.delete(
 );
 
 
-/* =========================
-   PAYMENT INTENTS / PAGOS
-   ========================= */
-
-/** POST /api/v1/payments/orders/:orderId/pay  (crea intent) */
+//crear payment intent para una orden
 router.post(
   '/orders/:orderId/pay',
   requireAuth,
@@ -99,16 +88,15 @@ router.post(
       const out = await Svc.createPaymentIntent({
         userId: req.user!.sub,
         orderId: req.params.orderId,
-        method: req.body.method,                 // opcional
-        paymentMethodId: req.body.paymentMethodId, // opcional
-        provider: req.body.provider,             // opcional
+        method: req.body.method,               
+        paymentMethodId: req.body.paymentMethodId, 
+        provider: req.body.provider,           
       });
       res.status(201).json(out);
     } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
   }
 );
-
-/** POST /api/v1/payments/confirm  (confirmar tarjeta mock) */
+//confirmar pago con tarjeta
 router.post(
   '/confirm',
   requireAuth,
@@ -123,7 +111,7 @@ router.post(
   }
 );
 
-/** POST /api/v1/payments/admin/:orderId/transfer/confirm  (admin confirma transferencia) */
+// ADMIN: confirmar transferencia bancaria
 router.post(
   '/admin/:orderId/transfer/confirm',
   requireAuth,
@@ -138,7 +126,7 @@ router.post(
   }
 );
 
-/** POST /api/v1/payments/admin/:orderId/cod/paid  (admin marca COD pagado) */
+// ADMIN: marcar COD como pagado
 router.post(
   '/admin/:orderId/cod/paid',
   requireAuth,
