@@ -1,28 +1,37 @@
-// src/server.ts
+import 'dotenv/config';
+import mongoose from 'mongoose';
+import { connectMongo } from './infrastructure/config/mongoDB';
 import { app } from './app';
+import { boomErrorHandler, genericErrorHandler, mongoErrorHandler } from './application/middlewares/errorHandle';
 
-const PORT = Number(process.env.PORT ?? 3000);
-const server = app.listen(PORT, () => {
-  console.log(`API running on http://localhost:${PORT}`);
+const PORT = Number(process.env.PORT) || 3000;
+
+app.use(boomErrorHandler)
+app.use(mongoErrorHandler);
+app.use(genericErrorHandler)
+
+const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ecommerce';
+
+
+app.get('/', (_req, res) => res.send('API Running OK'));
+app.get('/health/db', (_req, res) => {
+  res.json({ ok: mongoose.connection.readyState === 1, state: mongoose.connection.readyState });
 });
 
-// Manejo básico de errores no controlados
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err);
-  server.close(() => process.exit(1));
-});
+(async () => {
+  try {
+    await connectMongo(mongoUri);
+    console.log('[mongo] conexión exitosa');
+    app.listen(PORT, () => console.log(` Server on :${PORT}`));
+  } catch (err) {
+    console.error('[mongo] error de conexión:', err);
+    process.exit(1);
+  }
+})();
 
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-  server.close(() => process.exit(1));
-});
-
-// Cierre elegante (Ctrl+C / kill)
-process.on('SIGINT', () => {
-  console.log('SIGINT received. Shutting down gracefully...');
-  server.close(() => process.exit(0));
-});
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => process.exit(0));
+process.on('SIGINT', async () => {
+  console.log('\n[server] Apagando la apicita');
+  await mongoose.disconnect();
+  console.log('[mongo] disconnected (SIGINT)');
+  process.exit(0);
 });
