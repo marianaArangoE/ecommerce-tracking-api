@@ -12,8 +12,7 @@ app.use(genericErrorHandler)
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ecommerce';
 
-
-app.get('/', (_req, res) => res.send('API Running OK'));
+app.get('/', (_req, res) => res.send('API Running OK ✅'));
 app.get('/health/db', (_req, res) => {
   res.json({ ok: mongoose.connection.readyState === 1, state: mongoose.connection.readyState });
 });
