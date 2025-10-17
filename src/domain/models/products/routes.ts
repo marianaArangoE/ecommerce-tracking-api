@@ -39,7 +39,7 @@ productRouter.patch(
 );
 productRouter.delete(
   "/:id",
-  // requireAuth,
-  // requireRole("admin"),
+  requireAuth,
+  requireRole("admin"),
   productController.deleteProduct
 );
