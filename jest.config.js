@@ -10,10 +10,21 @@ module.exports = {
       testMatch: [
         '<rootDir>/src/**/*.test.ts',
         '<rootDir>/src/**/*.spec.ts',
+        '<rootDir>/tests/unit/**/*.test.ts',
+        '<rootDir>/tests/unit/**/*.spec.ts',
       ],
-  
-      setupFilesAfterEnv: [],
-      roots: ['<rootDir>/src'],
+      setupFilesAfterEnv: ['<rootDir>/tests/setup/jest.setup.ts'],
+      roots: ['<rootDir>/src', '<rootDir>/tests/unit'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1'
+      },
+      collectCoverageFrom: [
+        'src/**/*.ts',
+        '!src/**/*.d.ts',
+        '!src/server.ts'
+      ],
+      coverageDirectory: 'coverage',
+      coverageReporters: ['text', 'lcov', 'html'],
     },
     {
       displayName: 'integration',
@@ -21,12 +32,12 @@ module.exports = {
       testEnvironment: 'node',
       testTimeout: 30000,
       testMatch: [
-        '<rootDir>/tests/**/*.spec.ts',
-        '<rootDir>/tests/**/*.test.ts',
+        '<rootDir>/tests/integration/**/*.spec.ts',
+        '<rootDir>/tests/integration/**/*.test.ts',
       ],
       // 👇 solo integración usa Mongo en memoria
       setupFilesAfterEnv: ['<rootDir>/tests/setupMongo.ts'],
-      roots: ['<rootDir>/tests'],
+      roots: ['<rootDir>/tests/integration'],
     },
   ],
 };
