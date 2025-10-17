@@ -10,7 +10,9 @@ export const CartItemSchema = new Schema({
   unitPriceCents:  { type: Number, required: true, min: 0 },
   totalCents:      { type: Number, required: true, min: 0, default: 0 }, 
   priceLockUntil:  { type: Date } 
-}, { _id: false, strict: true });
+}, { _id: false, 
+  strict: true });
+
 //carrito
 export const CartSchema = new Schema({
   userId:        { type: String, required: true, index: true, trim: true },
@@ -31,19 +33,19 @@ CartSchema.virtual('id').get(function () {
 
 //un solo carrito activo por usuario
 CartSchema.index({ userId: 1, status: 1 }, { unique: true, partialFilterExpression: { status: 'active' } });
-//calcula totales
+//calculadora 
 function recalc(cart: any) {
   let subtotal = 0;
   for (const it of cart.items) {
     const qty  = Number(it.quantity || 0);
     const unit = Number(it.unitPriceCents || 0);
-    // evitar negativos y decimales
+    //total por item
     it.totalCents = Math.max(0, Math.round(qty * unit));
     subtotal += it.totalCents;
   }
   cart.subtotalCents = Math.max(0, Math.round(subtotal));
 }
-//antes de guardar
+//antes de guardar, debemos calcular totales
 CartSchema.pre('validate', function (next) {
   recalc(this);
   next();

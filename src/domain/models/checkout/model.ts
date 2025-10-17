@@ -1,23 +1,4 @@
-// import { model, Types } from 'mongoose';
-// import { CheckoutSchema } from './schema';
 
-// export type ShippingMethod = 'standard'|'express';
-// export type PaymentMethod  = 'card'|'transfer'|'cod';
-// export type CheckoutStatus = 'pending'|'confirmed'|'cancelled'|'expired';
-// export interface Checkout {
-//   id: string;                 // Identificador único del checkout
-//   cartId: string;             // Referencia al carrito actual
-//   userId: string;             // Usuario autenticado
-//   addressId: string;          // Dirección seleccionada (User.addresses)
-//   paymentMethodId: string;    // Referencia al método de pago elegido
-//   totalCents: number;         // Total del carrito confirmado
-//   currency: string;           // Ej: "COP"
-//   status: CheckoutStatus;     // "pending" | "completed" | "cancelled"
-//   createdAt: string;
-//   updatedAt: string;
-// }
-
-// src/domain/models/checkout/model.ts
 import { model, Types } from 'mongoose';
 import { CheckoutSchema } from './schema';
 
