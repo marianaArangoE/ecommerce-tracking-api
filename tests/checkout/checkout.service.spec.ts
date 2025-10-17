@@ -13,7 +13,7 @@ describe('Checkout Service', () => {
     await ensureCustomerBase({ _id:'U1' });
     const p = await createProduct({ priceCents: 10000, stock: 5, weight: 2 });
 
-    await CartSvc.addItem({ userId:'U1', productId: p.id, quantity: 2 }); // subtotal 20000
+    await CartSvc.addItem({ userId:'U1', productId: p.id, quantity: 2 });
     const chk = await CheckoutSvc.createCheckout({
       userId: 'U1',
       addressId: 'ADDR1',
@@ -27,7 +27,6 @@ describe('Checkout Service', () => {
     expect(chk.shippingCents).toBeGreaterThanOrEqual(0);
     expect(chk.grandTotalCents).toBe(chk.subtotalCents + chk.shippingCents);
     expect(chk.status).toBe('pending');
-    // snapshot de la address
     expect(chk.addressSnapshot?.id).toBe('ADDR1');
     expect(chk.addressSnapshot?.city).toBeTruthy();
   });
@@ -51,14 +50,12 @@ describe('Checkout Service', () => {
   test('createCheckout: envío gratis cuando subtotal >= 50000', async () => {
     await ensureCustomerBase({ _id:'U3' });
     const p = await createProduct({ priceCents: 30000, stock: 10, weight: 1 });
-
-    // 30k x 2 = 60k ⇒ debería aplicar envío gratis según tu regla
     await CartSvc.addItem({ userId:'U3', productId: p.id, quantity: 2 });
 
     const chk = await CheckoutSvc.createCheckout({
       userId: 'U3',
       addressId: 'ADDR1',
-      shippingMethod: 'express',      // aunque sea express, al ser >=50k debe quedar 0
+      shippingMethod: 'express',      
       paymentMethod: 'card',
     });
 
