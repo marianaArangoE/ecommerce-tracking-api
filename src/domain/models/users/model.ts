@@ -14,6 +14,8 @@ export interface User {
   name: string; 
   phone?: string;
   emailVerified: boolean; 
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
   createdAt: string; 
   role: UserRole; 
   addresses?: Address[];
@@ -23,10 +25,17 @@ export interface User {
 }
 UserSchema.virtual('id').get(function (this: any) {
   const id = this._id;
-  if (typeof id === 'string') return id;
-  if (id && typeof id.toHexString === 'function') return id.toHexString();
+  if (typeof id === 'string') 
+  {
+    return id;
+  }
+if (id && typeof id.toHexString === 'function') 
+  {
+    return id.toHexString();
+  }
   return id?.toString?.() || id;
 });
 
-UserSchema.set('toJSON', { virtuals: true }); UserSchema.set('toObject', { virtuals: true });
+UserSchema.set('toJSON', { virtuals: true });
+UserSchema.set('toObject', { virtuals: true });
 export const UserModel = model<User>('User', UserSchema);

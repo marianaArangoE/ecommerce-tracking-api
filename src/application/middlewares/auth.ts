@@ -76,6 +76,50 @@ export function requireSelfOrAdmin() {
 /** Exigir email verificado (para checkout, por ejemplo) */
 export function requireVerifiedEmail(req: AuthReq, res: Response, next: NextFunction) {
   if (!req.user) return res.status(401).json({ error: 'UNAUTHORIZED' });
-  if (!req.user.emailVerified) return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED' });
+  if (!req.user.emailVerified) {
+    return res.status(403).json({ 
+      error: 'EMAIL_NOT_VERIFIED',
+      message: 'Debes verificar tu email antes de realizar compras',
+      action: 'verify_email_required'
+    });
+  }
+  next();
+}
+
+/** Middleware combinado: requiere autenticación + email verificado + rol customer */
+export function requireCustomerWithVerifiedEmail(req: AuthReq, res: Response, next: NextFunction) {
+  // Primero validar autenticación
+  const token = getBearerToken(req);
+  if (!token) return res.status(401).json({ error: 'NO_AUTH_HEADER' });
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    req.user = payload;
+    req.authToken = token;
+  } catch (e) {
+    if (e instanceof TokenExpiredError) {
+      return res.status(401).json({ error: 'TOKEN_EXPIRED' });
+    }
+    if (e instanceof JsonWebTokenError) {
+      return res.status(401).json({ error: 'INVALID_TOKEN' });
+    }
+    return res.status(401).json({ error: 'AUTH_ERROR' });
+  }
+  
+  // Verificar rol customer
+  if (req.user.role !== 'customer') {
+    return res.status(403).json({ error: 'FORBIDDEN', message: 'Solo usuarios customer pueden realizar compras' });
+  }
+  
+  // Verificar email verificado
+  if (!req.user.emailVerified) {
+    return res.status(403).json({ 
+      error: 'EMAIL_NOT_VERIFIED',
+      message: 'Debes verificar tu email antes de realizar compras',
+      action: 'verify_email_required',
+      resendUrl: '/api/v1/users/resend-verification'
+    });
+  }
+  
   next();
 }
