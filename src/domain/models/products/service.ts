@@ -61,9 +61,13 @@ const updateProduct = async (id: string, data: ProductUpdate) => {
 const deleteProduct = async (id: string) => {
   await getByIdProduct(id);
 
-  const result = await ProductModel.deleteOne({ id });
+  const result = await ProductModel.updateOne(
+    { id },
+    { $set: { status: "archived" } },
+    { runValidators: true }
+  );
 
-  if (result.deletedCount === 0) {
+  if (!result) {
     throw Boom.badImplementation(`No se pudo eliminar el producto '${id}'`);
   } else {
     return result;
