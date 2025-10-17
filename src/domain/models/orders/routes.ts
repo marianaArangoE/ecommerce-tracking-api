@@ -130,6 +130,7 @@ router.post('/confirm', requireAuth, requireRole('customer'), async (req: AuthRe
     const { checkoutId, email } = req.body || {};
     if (!checkoutId || !email) return res.status(400).json({ error: 'checkoutId y email son requeridos' });
     const order = await confirmOrder({ userId: req.user!.sub, checkoutId, email });
+    const order = await confirmOrder({ userId: req.user!.sub, checkoutId, email });
     res.status(201).json(order);
   } catch (e: any) {
     res.status(400).json({ error: e.message });

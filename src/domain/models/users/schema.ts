@@ -14,6 +14,8 @@ export const UserSchema = new Schema({
   name:          { type: String, required: true },
   phone:         { type: String },
   emailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
+  emailVerificationExpires: { type: Date },
   createdAt:     { type: String, required: true },
   role:          { type: String, enum: ['admin','customer'], required: true },
   addresses:     { type: [AddressSchema], default: [] },
