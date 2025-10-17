@@ -14,5 +14,3 @@ app.use('/api/v1/carts', cartsRouter);
 app.use('/api/v1/checkout', checkoutRoutes);
 app.use('/api/v1/orders', ordersRoutes);
 app.use('/api/v1/products',productRouter);
-
-
