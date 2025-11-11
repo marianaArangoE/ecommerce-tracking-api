@@ -1,6 +1,6 @@
 import express from 'express';
 import usersRoutes from './domain/models/users/routes';
-import cartsRouter from './domain/models/shippingCart/routes';
+import cartsRouter from './domain/models/shippingCart/shippingCartRoutes';
 import checkoutRoutes from './domain/models/checkout/checkoutRoutes';
 import ordersRoutes from './domain/models/orders/routes';
 import paymentsRoutes from './domain/models/payments/routes';

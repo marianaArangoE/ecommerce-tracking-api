@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { requireAuth, requireRole, requireAnyRole, AuthReq } from '../../../application/middlewares/auth';
 import { validate } from '../../../application/middlewares/validate';
-import * as Svc from './services'; 
+import * as Svc from '../../services/paymentsServices'; 
 
 const router = Router();
 // todas las rutas requieren auth y rol customer o admin
