@@ -1,9 +1,8 @@
-// src/domain/models/orders/routes.ts
 import { Router, Request, Response } from 'express';
 import { body, param } from 'express-validator';
 import { validate } from '../../../application/middlewares/validate';
 import { requireAuth, requireAnyRole, requireRole, AuthReq } from '../../../application/middlewares/auth';
-
+import { OrdersController } from "../../../application/controllers/orders/orderController";
 import {
   confirmOrder,
   getMyOrder,
@@ -11,19 +10,14 @@ import {
   cancelOrder,
   autoCancelStalePending,
   advanceOrderStatus,
+  customerConfirmDelivery,
 } from '../../services/orderService';
 import { OrderModel } from './orderModel';
+import { emitOrderTracking } from '../../../infrastructure/websockets/socket.gateway';
 
 const router = Router();
+const ctrl = new OrdersController();
 
-/* ============================================================
- *                    RUTAS ADMIN (REPORTES)
- *  (DEBEN IR ANTES DE '/:orderId' PARA EVITAR COLISIONES)
- * ============================================================ */
-
-/** GET /api/v1/orders/admin/summary?from=YYYY-MM-DD&to=YYYY-MM-DD
- *  Conteo por estado y revenue (solo paid) en rango.
- */
 router.get('/admin/summary', requireAuth, requireRole('admin'), async (req: AuthReq, res: Response) => {
   const from = req.query.from ? new Date(String(req.query.from)) : new Date('1970-01-01');
   const to   = req.query.to   ? new Date(String(req.query.to))   : new Date();
@@ -49,9 +43,7 @@ router.get('/admin/summary', requireAuth, requireRole('admin'), async (req: Auth
   });
 });
 
-/** GET /api/v1/orders/admin/top-products?limit=10
- *  Productos top por unidades y ventas.
- */
+
 router.get('/admin/top-products', requireAuth, requireRole('admin'), async (req: AuthReq, res: Response) => {
   const limit = Math.min(Number(req.query.limit || 10), 100);
 
@@ -73,9 +65,6 @@ router.get('/admin/top-products', requireAuth, requireRole('admin'), async (req:
   res.json({ items: rows });
 });
 
-/** GET /api/v1/orders/admin/daily?days=14
- *  Serie diaria de pedidos y ventas pagadas.
- */
 router.get('/admin/daily', requireAuth, requireRole('admin'), async (req: AuthReq, res: Response) => {
   const days = Math.max(1, Math.min(Number(req.query.days || 14), 180));
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -84,7 +73,7 @@ router.get('/admin/daily', requireAuth, requireRole('admin'), async (req: AuthRe
     { $match: { createdAt: { $gte: since } } },
     {
       $project: {
-        day: { $substr: ['$createdAt', 0, 10] }, // 'YYYY-MM-DD'
+        day: { $substr: ['$createdAt', 0, 10] }, 
         totalCents: 1,
         paymentStatus: 1,
       },
@@ -102,9 +91,7 @@ router.get('/admin/daily', requireAuth, requireRole('admin'), async (req: AuthRe
   res.json({ items: rows });
 });
 
-/** POST /api/v1/orders/admin/auto-cancel { hours? }
- *  Auto-cancela PENDIENTE > N horas (default 48)
- */
+
 router.post(
   '/admin/auto-cancel',
   requireAuth,
@@ -118,13 +105,7 @@ router.post(
   }
 );
 
-/* ============================================================
- *                 FLUJO DE ÓRDENES (CUSTOMER/ADMIN)
- * ============================================================ */
-
-/** POST /api/v1/orders/confirm
- *  Confirmar pedido desde un checkout (solo customer).
- */
+//ordenes
 router.post('/confirm', requireAuth, requireRole('customer'), async (req: AuthReq, res: Response) => {
   try {
     const { checkoutId, email } = req.body || {};
@@ -136,9 +117,7 @@ router.post('/confirm', requireAuth, requireRole('customer'), async (req: AuthRe
   }
 });
 
-/** POST /api/v1/orders/:orderId/status
- *  Avanzar estado (admin): PENDIENTE → PROCESANDO → COMPLETADA
- */
+
 router.post(
   '/:orderId/status',
   requireAuth,
@@ -155,11 +134,6 @@ router.post(
   }
 );
 
-/** POST /api/v1/orders/:orderId/cancel
- *  Cancelar orden:
- *   - Admin: cualquiera si está PENDIENTE
- *   - Customer: solo propia si está PENDIENTE
- */
 router.post(
   '/:orderId/cancel',
   requireAuth,
@@ -180,11 +154,6 @@ router.post(
   }
 );
 
-/** GET /api/v1/orders/:orderId
- *  Ver una orden:
- *   - customer: solo propias
- *   - admin: puede ver cualquiera
- */
 router.get('/:orderId', requireAuth, requireAnyRole(['customer', 'admin']), async (req: AuthReq, res: Response) => {
   try {
     if (req.user!.role === 'admin') {
@@ -199,11 +168,6 @@ router.get('/:orderId', requireAuth, requireAnyRole(['customer', 'admin']), asyn
   }
 });
 
-/** GET /api/v1/orders
- *  Listar órdenes:
- *   - customer: sus propias (opcional filtro status)
- *   - admin: todas (opcional filtro status)
- */
 router.get('/', requireAuth, requireAnyRole(['customer', 'admin']), async (req: AuthReq, res: Response) => {
   try {
     const status = (req.query.status as any) || undefined;
@@ -219,5 +183,50 @@ router.get('/', requireAuth, requireAnyRole(['customer', 'admin']), async (req: 
     res.status(400).json({ error: e.message });
   }
 });
+
+//tracking routes
+router.get(
+  '/:orderId/tracking',
+  requireAuth,
+  requireAnyRole(['customer', 'admin']),
+  [param('orderId').notEmpty()],
+  validate,
+  ctrl.getTracking
+);
+
+
+router.patch(
+  '/:orderId/tracking',
+  requireAuth,
+  requireRole('admin'),
+  [
+    param('orderId').notEmpty(),
+    body('status').isString().notEmpty() 
+  ],
+  validate,
+  ctrl.updateTracking
+);
+router.post(
+  '/:orderId/confirm-delivery',
+  requireAuth,
+  requireRole('customer'),
+  [param('orderId').notEmpty()],
+  validate,
+  async (req: AuthReq, res: Response) => {
+    try {
+      const updated = await customerConfirmDelivery(req.user!.sub, req.params.orderId);
+      emitOrderTracking({
+        orderId: updated.orderId,
+        trackingStatus: updated.trackingStatus,
+        trackingHistory: updated.trackingHistory,
+      });
+
+      res.json({ ok: true, order: updated });
+    } catch (e: any) {
+      res.status(e.status || 400).json({ error: e.message });
+    }
+  }
+);
+
 
 export default router;

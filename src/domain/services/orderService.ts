@@ -10,32 +10,27 @@ import {
   nowISO,
   returnStock,
 } from './services';
+import { OrderStatus } from '../models/orders/orderStatus'; 
 
-/**
- * Confirmar pedido desde un checkout:
- * - Verifica que existe y pertenece al user
- * - Idempotencia por checkoutId
- * - Verifica stock y reserva (descuenta)
- * - Crea Order (PENDIENTE, paymentStatus: pending)
- * - Marca checkout como 'confirmed' y limpia carrito
- */
+export type OrderTrackingDTO = {
+  orderId: string;
+  trackingStatus: OrderStatus;
+  trackingHistory: { at: Date | string; status: OrderStatus; by?: string }[];
+};
+
 export async function confirmOrder(params: { userId: string; checkoutId: string; email: string }) {
   const { userId, checkoutId, email } = params;
 
-const ck = await CheckoutModel.findOne({ _id: checkoutId, userId });
-if (!ck) throw new Error('Checkout no encontrado');
+  const ck = await CheckoutModel.findOne({ _id: checkoutId, userId });
+  if (!ck) throw new Error('Checkout no encontrado');
 
-// ✅ Idempotencia primero: si ya existe la orden para este checkout, devuélvela.
-const existing = await OrderModel.findOne({ checkoutId: ck.id }).lean();
-if (existing) return existing;
+  const existing = await OrderModel.findOne({ checkoutId: ck.id }).lean();
+  if (existing) return existing;
 
-// Luego sí valida que el checkout siga pendiente
-if (ck.status && ck.status !== 'pending') {
-  throw new Error(`Checkout no está pendiente (estado actual: ${ck.status})`);
-}
+  if (ck.status && ck.status !== 'pending') {
+    throw new Error(`Checkout no está pendiente (estado actual: ${ck.status})`);
+  }
 
-
-  // Verifica stock y reserva (descuento de inventario)
   await verifyAndReserve(ck.items.map(i => ({ productId: i.productId, quantity: i.quantity })));
 
   const orderId = genOrderId();
@@ -52,31 +47,28 @@ if (ck.status && ck.status !== 'pending') {
     updatedAt: nowISO(),
   });
 
-  // Marcar checkout como confirmado
   ck.status = 'confirmed';
   ck.updatedAt = nowISO();
   await ck.save();
 
-  // Limpiar carrito (opcional)
   await CartModel.updateOne(
     { userId },
     { $set: { items: [], subtotalCents: 0, updatedAt: nowISO() } }
   );
 
-  // Notificar (stub)
   await sendOrderConfirmation(email, orderId);
 
   return order.toJSON();
 }
 
-/** Obtener una orden del cliente por id */
+
 export async function getMyOrder(userId: string, orderId: string) {
   const ord = await OrderModel.findOne({ userId, orderId }).lean();
   if (!ord) throw new Error('Orden no encontrada');
   return ord;
 }
 
-/** Listar mis órdenes (opcionalmente por estado) */
+
 export async function listMyOrders(
   userId: string,
   status?: 'PENDIENTE' | 'PROCESANDO' | 'COMPLETADA' | 'CANCELADA'
@@ -85,8 +77,6 @@ export async function listMyOrders(
   if (status) q.status = status;
   return OrderModel.find(q).sort({ createdAt: -1 }).limit(200).lean();
 }
-
-/** ADMIN: lista paginada de PENDIENTE/PROCESANDO (o solo uno) */
 export async function adminListOrders(params: {
   status?: 'PENDIENTE' | 'PROCESANDO';
   limit?: number;
@@ -104,12 +94,7 @@ export async function adminListOrders(params: {
   return { items, total, page, limit };
 }
 
-/**
- * Cancelar orden:
- *  - Admin: cualquiera si está PENDIENTE
- *  - Customer: solo propia si está PENDIENTE
- * Con “transacción + fallback” para entornos sin replica set.
- */
+
 export async function cancelOrder(
   orderId: string,
   actor: { role: 'admin' | 'customer'; userId: string; reason?: string }
@@ -133,7 +118,6 @@ export async function cancelOrder(
   try {
     session.startTransaction();
 
-    // 1) Cambiar estado condicionalmente (idempotencia)
     const updated = await OrderModel.findOneAndUpdate(
       { orderId, status: 'PENDIENTE' },
       { $set: { status: 'CANCELADA', updatedAt: nowISO() } },
@@ -147,29 +131,24 @@ export async function cancelOrder(
       throw e;
     }
 
-    // 2) Devolver stock (si tienes session opcional en returnStock, pásala; si no, igual funciona)
     await returnStock(
       updated.items.map(it => ({ productId: it.productId, quantity: it.quantity }))
-      // , session
     );
 
     await session.commitTransaction();
     session.endSession();
 
-    // Notificar (stub)
     const user = await UserModel.findById(updated.userId).lean();
     await sendOrderCancellation(user?.email ?? 'unknown@local', updated.orderId, actor.reason ?? 'Cancelada');
 
     return { ok: true };
   } catch (err: any) {
-    // Fallback para single-node (sin transacciones)
     session.endSession();
     const msg = String(err?.message || '');
     if (
       msg.includes('Transaction numbers are only allowed') ||
       msg.includes('does not support transactions')
     ) {
-      // 1) Cambiar estado condicionalmente
       const updated = await OrderModel.findOneAndUpdate(
         { orderId, status: 'PENDIENTE' },
         { $set: { status: 'CANCELADA', updatedAt: nowISO() } },
@@ -181,13 +160,16 @@ export async function cancelOrder(
         throw e;
       }
 
-      // 2) Devolver stock (mejor esfuerzo)
       await returnStock(
         updated.items.map(it => ({ productId: it.productId, quantity: it.quantity }))
       );
 
       const user = await UserModel.findById(updated.userId).lean();
-      await sendOrderCancellation(user?.email ?? 'unknown@local', updated.orderId, actor.reason ?? 'Cancelada');
+      await sendOrderCancellation(
+        user?.email ?? 'unknown@local',
+        updated.orderId,
+        actor.reason ?? 'Cancelada'
+      );
 
       return { ok: true, fallback: true };
     }
@@ -195,7 +177,6 @@ export async function cancelOrder(
   }
 }
 
-/** Auto-cancelar órdenes PENDIENTE más viejas que N horas (default 48h) */
 export async function autoCancelStalePending(hours = 48) {
   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
@@ -224,7 +205,6 @@ export async function autoCancelStalePending(hours = 48) {
 
       await returnStock(
         updated.items.map(it => ({ productId: it.productId, quantity: it.quantity }))
-        // , session
       );
 
       await session.commitTransaction();
@@ -245,7 +225,6 @@ export async function autoCancelStalePending(hours = 48) {
         msg.includes('Transaction numbers are only allowed') ||
         msg.includes('does not support transactions')
       ) {
-        // Fallback sin transacción
         const updated = await OrderModel.findOneAndUpdate(
           { orderId: o.orderId, status: 'PENDIENTE' },
           { $set: { status: 'CANCELADA', updatedAt: nowISO() } },
@@ -266,7 +245,6 @@ export async function autoCancelStalePending(hours = 48) {
 
         processed++;
       } else {
-        // log opcional y continuar con las demás
       }
     }
   }
@@ -274,7 +252,6 @@ export async function autoCancelStalePending(hours = 48) {
   return { ok: true, processed, olderThanISO: cutoff, count: stale.length };
 }
 
-/** Avanzar estado de orden (admin): PENDIENTE → PROCESANDO → COMPLETADA */
 export async function advanceOrderStatus(orderId: string, next: 'PROCESANDO' | 'COMPLETADA') {
   const ord = await OrderModel.findOne({ orderId });
   if (!ord) {
@@ -297,10 +274,18 @@ export async function advanceOrderStatus(orderId: string, next: 'PROCESANDO' | '
     throw e;
   }
 
-  // Update idempotente/atómico (solo si sigue en el estado esperado)
+  const update: any = { $set: { status: next, updatedAt: nowISO() } };
+  if (next === 'PROCESANDO') {
+    update.$set.trackingStatus = OrderStatus.PREPARANDO_PEDIDO;
+    update.$push = {
+      ...(update.$push || {}),
+      trackingHistory: { at: new Date(), status: OrderStatus.PREPARANDO_PEDIDO, by: 'system' }
+    };
+  }
+
   const updated = await OrderModel.findOneAndUpdate(
     { orderId, status: ord.status },
-    { $set: { status: next, updatedAt: nowISO() } },
+    update,
     { new: true }
   ).lean();
 
@@ -312,8 +297,104 @@ export async function advanceOrderStatus(orderId: string, next: 'PROCESANDO' | '
   return updated;
 }
 
-/** Notificación de cancelación (stub local; puedes moverla a services.ts) */
+
+export async function getOrderTracking(orderId: string): Promise<OrderTrackingDTO> {
+  const ord = await OrderModel.findOne(
+    { orderId },
+    { _id: 0, orderId: 1, trackingStatus: 1, trackingHistory: 1 }
+  ).lean<OrderTrackingDTO>();
+
+  if (!ord) { 
+    const e: any = new Error('ORDER_NOT_FOUND'); 
+    e.status = 404; 
+    throw e; 
+  }
+  return ord;
+}
+
+export async function updateOrderTrackingStatus(
+  orderId: string,
+  next: OrderStatus,
+  actorId?: string
+): Promise<OrderTrackingDTO> {
+  const updated = await OrderModel.findOneAndUpdate(
+    { orderId },
+    {
+      $set: { trackingStatus: next, updatedAt: nowISO() },
+      $push: { trackingHistory: { at: new Date(), status: next, by: actorId } }
+    },
+    {
+      new: true,
+      projection: { _id: 0, orderId: 1, trackingStatus: 1, trackingHistory: 1 }
+    }
+  ).lean<OrderTrackingDTO>();
+
+  if (!updated) { 
+    const e: any = new Error('ORDER_NOT_FOUND'); 
+    e.status = 404; 
+    throw e; 
+  }
+  return updated;
+}
+
+export async function customerConfirmDelivery(userId: string, orderId: string): Promise<OrderTrackingDTO> {
+  const ord = await OrderModel.findOne(
+    { orderId, userId },
+    { _id: 0, orderId: 1, status: 1, trackingStatus: 1, trackingHistory: 1 }
+  ).lean<{ orderId: string; status: string; trackingStatus?: OrderStatus; trackingHistory: any[] }>();
+
+  if (!ord) {
+    const e: any = new Error('ORDER_NOT_FOUND');
+    e.status = 404;
+    throw e;
+  }
+
+  if (ord.status === 'COMPLETADA' && ord.trackingStatus === OrderStatus.COMPLETADO) {
+    return {
+      orderId: ord.orderId,
+      trackingStatus: OrderStatus.COMPLETADO,
+      trackingHistory: ord.trackingHistory ?? [],
+    };
+  }
+
+ 
+  const allowedBusiness = ['PROCESANDO', 'COMPLETADA'];
+  if (!allowedBusiness.includes(ord.status)) {
+    const e: any = new Error('ORDER_NOT_READY_TO_CONFIRM');
+    e.status = 400;
+    throw e;
+  }
+const updated = await OrderModel.findOneAndUpdate(
+    { orderId, userId },
+    {
+      $set: {
+        trackingStatus: OrderStatus.COMPLETADO,
+        status: 'COMPLETADA',
+        updatedAt: nowISO(),
+        customerConfirmedAt: nowISO(),
+        customerConfirmedBy: userId,
+        customerConfirmationSource: 'api',
+      },
+      $push: {
+        trackingHistory: { at: new Date(), status: OrderStatus.COMPLETADO, by: userId },
+      },
+    },
+    {
+      new: true,
+      projection: { _id: 0, orderId: 1, trackingStatus: 1, trackingHistory: 1 },
+    }
+  ).lean<OrderTrackingDTO>();
+
+  if (!updated) {
+    const e: any = new Error('ORDER_NOT_FOUND');
+    e.status = 404;
+    throw e;
+  }
+
+  return updated;
+}
 async function sendOrderCancellation(to: string, orderId: string, reason: string) {
   console.log(`[EMAIL] Cancelación enviada a ${to}: ${orderId} (${reason})`);
   return true;
 }
+ 
