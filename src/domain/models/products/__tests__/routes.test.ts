@@ -1,4 +1,4 @@
-import { productRouter } from "../routes";
+import { productRouter } from "../../../../application/routes/productRoutes";
 
 describe("productRouter", () => {
   it("exporta las rutas esperadas con los métodos correctos", () => {

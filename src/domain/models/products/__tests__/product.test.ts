@@ -2,7 +2,7 @@ import {
   createProductSchema,
   updateProductSchema,
   getProductSchema,
-} from "../productSchema";
+} from "../../../../application/schemas/productSchemaJoi";
 
 describe("productSchema (Joi) validations", () => {
   const validBase = {

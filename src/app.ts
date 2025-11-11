@@ -1,10 +1,10 @@
 import express from 'express';
 import usersRoutes from './domain/models/users/routes';
 import cartsRouter from './domain/models/shippingCart/routes';
-import checkoutRoutes from './domain/models/checkout/routes';
+import checkoutRoutes from './domain/models/checkout/checkoutRoutes';
 import ordersRoutes from './domain/models/orders/routes';
 import paymentsRoutes from './domain/models/payments/routes';
-import { productRouter } from './domain/models/products/routes';
+import { productRouter } from './application/routes/productRoutes';
 
 export const app = express();
 app.use(express.json());

@@ -1,11 +1,11 @@
 
 import crypto from 'crypto';
 import mongoose, { Types, Model } from 'mongoose';
-import { ProductModel as ProductM } from '../src/domain/models/products/schema';
+import { ProductModel as ProductM } from '../src/infrastructure/schemas/productSchema';
 
 import { CartModel } from '../src/domain/models/shippingCart/model';
-import { CheckoutModel } from '../src/domain/models/checkout/model';
-import { OrderModel } from '../src/domain/models/orders/model';
+import { CheckoutModel } from '../src/domain/models/checkout/checkoutModel';
+import { OrderModel } from '../src/domain/models/orders/orderModel';
 import bcrypt from 'bcrypt';
 import { UserModel } from '../src/domain/models/users/model';
 

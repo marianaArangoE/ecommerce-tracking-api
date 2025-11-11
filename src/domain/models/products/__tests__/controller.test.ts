@@ -1,120 +1,142 @@
+
 jest.mock(
-  "../service",
+  "../model",
   () => ({
-    productService: {
-      getAllProducts: jest.fn(),
-      getAllProductsCustomer: jest.fn(),
-      getByIdProduct: jest.fn(),
-      getByIdProductCustomer: jest.fn(),
-      createProduct: jest.fn(),
-      updateProduct: jest.fn(),
-      deleteProduct: jest.fn(),
+    ProductModel: {
+      find: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      updateOne: jest.fn(),
+      deleteOne: jest.fn(),
     },
   }),
   { virtual: true }
 );
 
-import { productController } from "../controller";
-import { productService } from "../service";
+import { productService } from "../../../services/productService";
+import * as ModelModule from "../productModel";
 
-const svc = productService as unknown as {
-  getAllProducts: jest.Mock;
-  getAllProductsCustomer: jest.Mock;
-  getByIdProduct: jest.Mock;
-  getByIdProductCustomer: jest.Mock;
-  createProduct: jest.Mock;
-  updateProduct: jest.Mock;
-  deleteProduct: jest.Mock;
+const mocked = (ModelModule as any).ProductModel as {
+  find: jest.Mock;
+  findOne: jest.Mock;
+  create: jest.Mock;
+  updateOne: jest.Mock;
+  deleteOne: jest.Mock;
 };
 
-describe("productController", () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it("getAllProducts -> admin calls getAllProducts and sends result", async () => {
-    const req: any = { user: { role: "admin" } };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    svc.getAllProducts.mockResolvedValue([1]);
-    await productController.getAllProducts(req, res, next);
-    expect(svc.getAllProducts).toHaveBeenCalledTimes(1);
-    expect(res.send).toHaveBeenCalledWith([1]);
-    expect(next).not.toHaveBeenCalled();
+describe("productService", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it("getAllProducts -> customer calls getAllProductsCustomer and sends result", async () => {
-    const req: any = { user: { role: "customer" } };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    svc.getAllProductsCustomer.mockResolvedValue([2]);
-    await productController.getAllProducts(req, res, next);
-    expect(svc.getAllProductsCustomer).toHaveBeenCalledTimes(1);
-    expect(res.send).toHaveBeenCalledWith([2]);
-    expect(next).not.toHaveBeenCalled();
+  it("getAllProducts returns result when found", async () => {
+    mocked.find.mockResolvedValue([{ id: "1" }]);
+    const res = await productService.getAllProducts();
+    expect(res).toEqual([{ id: "1" }]);
+    expect(mocked.find).toHaveBeenCalledTimes(1);
+    expect(mocked.find).toHaveBeenCalledWith();
   });
 
-  it("getByIdProduct -> admin calls getByIdProduct and sends result", async () => {
-    const req: any = { params: { id: "x" }, user: { role: "admin" } };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    svc.getByIdProduct.mockResolvedValue({ id: "x" });
-    await productController.getByIdProduct(req, res, next);
-    expect(svc.getByIdProduct).toHaveBeenCalledWith("x");
-    expect(res.send).toHaveBeenCalledWith({ id: "x" });
-    expect(next).not.toHaveBeenCalled();
+  it("getAllProducts throws 404 when not found (null)", async () => {
+    mocked.find.mockResolvedValue(null);
+    await expect(productService.getAllProducts()).rejects.toHaveProperty(
+      "output.statusCode",
+      404
+    );
   });
 
-  it("getByIdProduct -> customer calls getByIdProductCustomer and sends result", async () => {
-    const req: any = { params: { id: "y" }, user: { role: "customer" } };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    svc.getByIdProductCustomer.mockResolvedValue({ id: "y" });
-    await productController.getByIdProduct(req, res, next);
-    expect(svc.getByIdProductCustomer).toHaveBeenCalledWith("y");
-    expect(res.send).toHaveBeenCalledWith({ id: "y" });
-    expect(next).not.toHaveBeenCalled();
+  it("getByIdProduct returns product when found", async () => {
+    mocked.findOne.mockResolvedValue({ id: "p1" });
+    const res = await productService.getByIdProduct("p1");
+    expect(res).toEqual({ id: "p1" });
+    expect(mocked.findOne).toHaveBeenCalledWith({ id: "p1" });
   });
 
-  it("createProduct calls service.createProduct with body and sends result", async () => {
-    const dto = { name: "P" };
-    const req: any = { body: dto };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    svc.createProduct.mockResolvedValue({ id: "n" });
-    await productController.createProduct(req, res, next);
-    expect(svc.createProduct).toHaveBeenCalledWith(dto);
-    expect(res.send).toHaveBeenCalledWith({ id: "n" });
-    expect(next).not.toHaveBeenCalled();
+  it("getByIdProduct throws 404 when not found", async () => {
+    mocked.findOne.mockResolvedValue(null);
+    await expect(productService.getByIdProduct("x")).rejects.toHaveProperty(
+      "output.statusCode",
+      404
+    );
   });
 
-  it("updateProduct calls service.updateProduct with params.id and body and sends result", async () => {
-    const req: any = { params: { id: "i1" }, body: { name: "X" } };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    svc.updateProduct.mockResolvedValue({ matchedCount: 1 });
-    await productController.updateProduct(req, res, next);
-    expect(svc.updateProduct).toHaveBeenCalledWith("i1", { name: "X" });
-    expect(res.send).toHaveBeenCalledWith({ matchedCount: 1 });
-    expect(next).not.toHaveBeenCalled();
+  it("getAllProductsCustomer queries stock>0 and returns result", async () => {
+    mocked.find.mockResolvedValue([{ id: "c1" }]);
+    const res = await productService.getAllProductsCustomer();
+    expect(res).toEqual([{ id: "c1" }]);
+    expect(mocked.find).toHaveBeenCalledWith({ stock: { $gt: 0 }, status: "active" });
   });
 
-  it("deleteProduct calls service.deleteProduct with params.id and sends result", async () => {
-    const req: any = { params: { id: "i2" } };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    svc.deleteProduct.mockResolvedValue({ deletedCount: 1 });
-    await productController.deleteProduct(req, res, next);
-    expect(svc.deleteProduct).toHaveBeenCalledWith("i2");
-    expect(res.send).toHaveBeenCalledWith({ deletedCount: 1 });
-    expect(next).not.toHaveBeenCalled();
+  it("getAllProductsCustomer throws 404 when not found", async () => {
+    mocked.find.mockResolvedValue(null);
+    await expect(productService.getAllProductsCustomer()).rejects.toHaveProperty(
+      "output.statusCode",
+      404
+    );
   });
 
-  it("forwards errors to next when service throws", async () => {
-    const req: any = { user: { role: "admin" } };
-    const res: any = { send: jest.fn() };
-    const next = jest.fn();
-    const err = new Error("boom");
-    svc.getAllProducts.mockRejectedValue(err);
-    await productController.getAllProducts(req, res, next);
-    expect(next).toHaveBeenCalledWith(err);
+  it("getByIdProductCustomer queries id and stock>0 and returns product", async () => {
+    mocked.findOne.mockResolvedValue({ id: "c2" });
+    const res = await productService.getByIdProductCustomer("c2");
+    expect(res).toEqual({ id: "c2" });
+    expect(mocked.findOne).toHaveBeenCalledWith({
+      id: "c2",
+      stock: { $gt: 0 },
+    });
+  });
+
+  it("getByIdProductCustomer throws 404 when not found", async () => {
+    mocked.findOne.mockResolvedValue(null);
+    await expect(productService.getByIdProductCustomer("nope")).rejects.toHaveProperty(
+      "output.statusCode",
+      404
+    );
+  });
+
+  it("createProduct calls create and returns new product", async () => {
+    const payload = { sku: "S1", name: "P" };
+    mocked.create.mockResolvedValue({ id: "new", ...payload });
+    const res = await productService.createProduct(payload as any);
+    expect(res).toEqual({ id: "new", ...payload });
+    expect(mocked.create).toHaveBeenCalledWith(expect.objectContaining(payload));
+  });
+
+  it("updateProduct calls updateOne after existence check and returns result", async () => {
+    mocked.findOne.mockResolvedValue({ id: "u1" });
+    mocked.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const res = await productService.updateProduct("u1", { name: "X" } as any);
+    expect(mocked.findOne).toHaveBeenCalledWith({ id: "u1" });
+    expect(mocked.updateOne).toHaveBeenCalledWith(
+      { id: "u1" },
+      { $set: { name: "X" } },
+      { runValidators: true }
+    );
+    expect(res).toEqual({ matchedCount: 1 });
+  });
+
+  it("updateProduct rejects when product not found", async () => {
+    mocked.findOne.mockResolvedValue(null);
+    await expect(productService.updateProduct("no", {})).rejects.toHaveProperty(
+      "output.statusCode",
+      404
+    );
+  });
+
+  it("deleteProduct deletes product when exists (deleteOne) and returns result", async () => {
+    mocked.findOne.mockResolvedValue({ id: "d1" });
+    mocked.deleteOne.mockResolvedValue({ deletedCount: 1 });
+    const res = await productService.deleteProduct("d1");
+    expect(mocked.findOne).toHaveBeenCalledWith({ id: "d1" });
+    expect(mocked.deleteOne).toHaveBeenCalledWith({ id: "d1" });
+    expect(res).toEqual({ deletedCount: 1 });
+  });
+
+  it("deleteProduct throws when nothing deleted", async () => {
+    mocked.findOne.mockResolvedValue({ id: "d2" });
+    mocked.deleteOne.mockResolvedValue({ deletedCount: 0 });
+    await expect(productService.deleteProduct("d2")).rejects.toHaveProperty(
+      "output.statusCode",
+      500
+    );
   });
 });

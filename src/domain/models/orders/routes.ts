@@ -11,8 +11,8 @@ import {
   cancelOrder,
   autoCancelStalePending,
   advanceOrderStatus,
-} from './service';
-import { OrderModel } from './model';
+} from '../../services/orderService';
+import { OrderModel } from './orderModel';
 
 const router = Router();
 

@@ -1,4 +1,4 @@
-import { ProductModel, ProductCreate, ProductUpdate } from "./model";
+import { ProductModel, ProductCreate, ProductUpdate } from "../models/products/productModel";
 import Boom from "@hapi/boom";
 
 const getAllProducts = async () => {

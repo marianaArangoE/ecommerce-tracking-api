@@ -1,15 +1,15 @@
 import mongoose from 'mongoose';
-import { CheckoutModel } from '../checkout/model';
-import { OrderModel } from './model';
-import { CartModel } from '../shippingCart/model';
-import { UserModel } from '../users/model';
+import { CheckoutModel } from '../models/checkout/checkoutModel';
+import { OrderModel } from '../models/orders/orderModel';
+import { CartModel } from '../models/shippingCart/model';
+import { UserModel } from '../models/users/model';
 import {
   verifyAndReserve,
   genOrderId,
   sendOrderConfirmation,
   nowISO,
   returnStock,
-} from '../../services/services';
+} from './services';
 
 /**
  * Confirmar pedido desde un checkout:

@@ -1,12 +1,12 @@
 
 import { connect, close, clear } from '../setupMongo';
 import * as CartSvc from '../../src/domain/models/shippingCart/service';
-import * as CheckoutSvc from '../../src/domain/models/checkout/service';
-import * as OrdersSvc from '../../src/domain/models/orders/service';
+import * as CheckoutSvc from '../../src/domain/services/checkoutService';
+import * as OrdersSvc from '../../src/domain/services/orderService';
 import * as PaySvc from '../../src/domain/models/payments/services';
 import { ensureCustomerBase, createProduct } from '../factories';
 import { PaymentIntentModel } from '../../src/domain/models/payments/model';
-import { OrderModel } from '../../src/domain/models/orders/model';
+import { OrderModel } from '../../src/domain/models/orders/orderModel';
 
 
 jest.mock('../../src/domain/services/services', () => ({

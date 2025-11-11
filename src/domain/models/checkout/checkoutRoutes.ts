@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createCheckout, getCheckout } from './service';
+import { createCheckout, getCheckout } from '../../services/checkoutService';
 import { requireCustomerWithVerifiedEmail, AuthReq } from '../../../application/middlewares/auth';
 
 const router = Router();

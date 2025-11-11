@@ -1,5 +1,5 @@
 import { model, Types, Document } from 'mongoose';
-import { OrderSchema } from './schema';
+import { OrderSchema } from '../../../infrastructure/schemas/orderSchema';
 export type OrderStatus = 'PENDIENTE' | 'PROCESANDO' | 'COMPLETADA' | 'CANCELADA';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type ShippingStatus = 'not_started' | 'in_transit' | 'delivered';
