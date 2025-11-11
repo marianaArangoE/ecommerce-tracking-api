@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import userRoutes from '../../../../../src/domain/models/users/routes';
-import * as UserSvc from '../../../../../src/domain/models/users/service';
+import * as UserSvc from '../../../../../src/domain/services/userService';
 import { validate } from '../../../../../src/application/middlewares/validate';
 import { requireAuth } from '../../../../../src/application/middlewares/auth';
 

@@ -3,11 +3,11 @@ import crypto from 'crypto';
 import mongoose, { Types, Model } from 'mongoose';
 import { ProductModel as ProductM } from '../src/infrastructure/schemas/productSchema';
 
-import { CartModel } from '../src/domain/models/shippingCart/model';
+import { CartModel } from '../src/domain/models/shippingCart/shippingCartModel';
 import { CheckoutModel } from '../src/domain/models/checkout/checkoutModel';
 import { OrderModel } from '../src/domain/models/orders/orderModel';
 import bcrypt from 'bcrypt';
-import { UserModel } from '../src/domain/models/users/model';
+import { UserModel } from '../src/domain/models/users/userModel';
 
 
 const ProductModel = ProductM as unknown as Model<any>;

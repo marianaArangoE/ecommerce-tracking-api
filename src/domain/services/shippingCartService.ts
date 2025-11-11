@@ -1,5 +1,5 @@
-import { CartModel } from './model';
-import { ProductModel } from '../products/productModel';
+import { CartModel } from '../models/shippingCart/shippingCartModel';
+import { ProductModel } from '../models/products/productModel';
 //expiracion del carrito en 24h
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 //congelar el precio 2h

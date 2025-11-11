@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { body, param } from 'express-validator';
 import { validate } from '../../../application/middlewares/validate';
 import { requireAuth, AuthReq } from '../../../application/middlewares/auth';
-import * as UserSvc from './service';
+import * as UserSvc from '../../services/userService';
 
 const router = Router();
 

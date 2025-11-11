@@ -1,6 +1,6 @@
 // tests/checkout/checkout.service.spec.ts
 import { connect, close, clear } from '../setupMongo';
-import * as CartSvc from '../../src/domain/models/shippingCart/service';
+import * as CartSvc from '../../src/domain/services/shippingCartService';
 import * as CheckoutSvc from '../../src/domain/services/checkoutService';
 import { ensureCustomerBase, createProduct } from '../factories';
 

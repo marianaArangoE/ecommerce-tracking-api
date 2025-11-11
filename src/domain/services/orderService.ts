@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import { CheckoutModel } from '../models/checkout/checkoutModel';
 import { OrderModel } from '../models/orders/orderModel';
-import { CartModel } from '../models/shippingCart/model';
-import { UserModel } from '../models/users/model';
+import { CartModel } from '../models/shippingCart/shippingCartModel';
+import { UserModel } from '../models/users/userModel';
 import {
   verifyAndReserve,
   genOrderId,

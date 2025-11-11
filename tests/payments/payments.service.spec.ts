@@ -1,6 +1,6 @@
 
 import { connect, close, clear } from '../setupMongo';
-import * as CartSvc from '../../src/domain/models/shippingCart/service';
+import * as CartSvc from '../../src/domain/services/shippingCartService';
 import * as CheckoutSvc from '../../src/domain/services/checkoutService';
 import * as OrdersSvc from '../../src/domain/services/orderService';
 import * as PaySvc from '../../src/domain/models/payments/services';

@@ -1,4 +1,4 @@
-import { User } from './model';
+import { User } from './userModel';
 export const users: User[] = [
   { id:'u1', email:'mae@example.com', passwordHash:'***', name:'Ana',
     role:'USER', emailVerified:true, createdAt:new Date().toISOString() },

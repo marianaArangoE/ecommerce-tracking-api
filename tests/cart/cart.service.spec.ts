@@ -1,5 +1,5 @@
 import { connect, close, clear } from '../setupMongo';
-import * as CartSvc from '../../src/domain/models/shippingCart/service';
+import * as CartSvc from '../../src/domain/services/shippingCartService';
 import { ensureCustomerBase, createProduct } from '../factories';
 
 beforeAll(async () => { await connect(); });

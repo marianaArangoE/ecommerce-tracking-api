@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { validate } from '../../../application/middlewares/validate';
-import { addItem, setItemQuantity, removeItem, getMyCart } from './service';
+import { addItem, setItemQuantity, removeItem, getMyCart } from '../../services/shippingCartService';
 import { requireAuth, requireAnyRole, AuthReq } from '../../../application/middlewares/auth';
 
 const router = Router();

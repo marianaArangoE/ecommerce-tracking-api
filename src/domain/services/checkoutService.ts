@@ -1,7 +1,7 @@
 import { CheckoutModel } from '../models/checkout/checkoutModel';
-import { CartModel } from '../models/shippingCart/model';
+import { CartModel } from '../models/shippingCart/shippingCartModel';
 import { ProductModel } from '../models/products/productModel';
-import { UserModel } from '../models/users/model';
+import { UserModel } from '../models/users/userModel';
 
 const nowISO = () => new Date().toISOString();
 

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';    
 import jwt from 'jsonwebtoken';
-import { UserModel } from './model';
-import { generateVerificationToken, sendVerificationEmail } from '../../services/emailService';
+import { UserModel } from '../models/users/userModel';
+import { generateVerificationToken, sendVerificationEmail } from './emailService';
 
 const ROUNDS = 10;
 const ACCESS_TTL = '15m';
