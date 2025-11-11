@@ -1,5 +1,5 @@
 import { model, Types } from 'mongoose';
-import { PaymentMethodSchema, PaymentIntentSchema } from './schema';
+import { PaymentMethodSchema, PaymentIntentSchema } from '../../../infrastructure/schemas/paymentsSchema';
 
 export interface PaymentMethod {
   _id: Types.ObjectId;

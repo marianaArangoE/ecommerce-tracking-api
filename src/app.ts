@@ -1,9 +1,9 @@
 import express from 'express';
-import usersRoutes from './domain/models/users/routes';
+import usersRoutes from './domain/models/users/userRoutes';
 import cartsRouter from './domain/models/shippingCart/shippingCartRoutes';
 import checkoutRoutes from './domain/models/checkout/checkoutRoutes';
-import ordersRoutes from './domain/models/orders/routes';
-import paymentsRoutes from './domain/models/payments/routes';
+import ordersRoutes from './domain/models/orders/orderRoutes';
+import paymentsRoutes from './domain/models/payments/paymentsSRoutes';
 import { productRouter } from './application/routes/productRoutes';
 
 export const app = express();
