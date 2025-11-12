@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import { AuthReq } from '../../../application/middlewares/auth';
-import * as Svc from '../../services/paymentsServices';
+import { AuthReq } from '../middlewares/auth';
+import * as Svc from '../../domain/services/paymentsServices';
 
 export const listMyMethods = async (req: AuthReq, res: Response) => {
   const items = await Svc.listMyMethods(req.user!.sub);

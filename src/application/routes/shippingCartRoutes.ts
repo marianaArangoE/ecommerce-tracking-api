@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import { validate } from '../../../application/middlewares/validate';
-import { requireAuth, requireAnyRole } from '../../../application/middlewares/auth';
-import * as Controller from './shippingCartController';
+import { validate } from '../middlewares/validate';
+import { requireAuth, requireAnyRole } from '../middlewares/auth';
+import * as Controller from '../controllers/shippingCartController';
 
 const router = Router();
 router.use(requireAuth, requireAnyRole(['customer']));
@@ -42,3 +42,4 @@ router.delete(
 );
 
 export default router;
+

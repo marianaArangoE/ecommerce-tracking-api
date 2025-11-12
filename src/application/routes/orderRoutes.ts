@@ -1,9 +1,9 @@
-// src/domain/models/orders/routes.ts
+// src/application/routes/orderRoutes.ts
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import { validate } from '../../../application/middlewares/validate';
-import { requireAuth, requireAnyRole, requireRole } from '../../../application/middlewares/auth';
-import * as Controller from './orderController';
+import { validate } from '../middlewares/validate';
+import { requireAuth, requireAnyRole, requireRole } from '../middlewares/auth';
+import * as Controller from '../controllers/orderController';
 
 const router = Router();
 
@@ -89,3 +89,4 @@ router.get('/:orderId', requireAuth, requireAnyRole(['customer', 'admin']), Cont
 router.get('/', requireAuth, requireAnyRole(['customer', 'admin']), Controller.list);
 
 export default router;
+

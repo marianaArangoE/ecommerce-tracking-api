@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { requireCustomerWithVerifiedEmail } from '../../../application/middlewares/auth';
-import * as Controller from './checkoutController';
+import { requireCustomerWithVerifiedEmail } from '../middlewares/auth';
+import * as Controller from '../controllers/checkoutController';
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import { Response } from 'express';
-import { AuthReq } from '../../../application/middlewares/auth';
-import * as OrderService from '../../services/orderService';
-import { OrderModel } from './orderModel';
+import { AuthReq } from '../middlewares/auth';
+import * as OrderService from '../../domain/services/orderService';
+import { OrderModel } from '../../domain/models/orders/orderModel';
 
 export const adminSummary = async (req: AuthReq, res: Response) => {
   const from = req.query.from ? new Date(String(req.query.from)) : new Date('1970-01-01');

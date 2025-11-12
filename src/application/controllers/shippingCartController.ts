@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import { AuthReq } from '../../../application/middlewares/auth';
-import * as CartService from '../../services/shippingCartService';
+import { AuthReq } from '../middlewares/auth';
+import * as CartService from '../../domain/services/shippingCartService';
 
 export const getMyCart = async (req: AuthReq, res: Response) => {
   try {

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { AuthReq } from '../../../application/middlewares/auth';
-import * as UserSvc from '../../services/userService';
+import { AuthReq } from '../middlewares/auth';
+import * as UserSvc from '../../domain/services/userService';
 
 export const login = async (req: Request, res: Response) => {
   try {

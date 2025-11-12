@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import { validate } from '../../../application/middlewares/validate';
-import { requireAuth } from '../../../application/middlewares/auth';
-import * as Controller from './userController';
+import { validate } from '../middlewares/validate';
+import { requireAuth } from '../middlewares/auth';
+import * as Controller from '../controllers/userController';
 
 export const userRouter = Router();
 
@@ -149,3 +149,4 @@ userRouter.get(
 );
 
 //export default userRouter;
+

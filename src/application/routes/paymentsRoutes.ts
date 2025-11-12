@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import { requireAuth, requireRole } from '../../../application/middlewares/auth';
-import { validate } from '../../../application/middlewares/validate';
-import * as Controller from './paymentsController';
+import { requireAuth, requireRole } from '../middlewares/auth';
+import { validate } from '../middlewares/validate';
+import * as Controller from '../controllers/paymentsController';
 
 const router = Router();
 
@@ -95,3 +95,4 @@ router.post(
 );
 
 export default router;
+

@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import { AuthReq } from '../../../application/middlewares/auth';
-import * as CheckoutService from '../../services/checkoutService';
+import { AuthReq } from '../middlewares/auth';
+import * as CheckoutService from '../../domain/services/checkoutService';
 
 export const createCheckout = async (req: AuthReq, res: Response) => {
   try {
