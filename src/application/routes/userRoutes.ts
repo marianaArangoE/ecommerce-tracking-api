@@ -1,32 +1,33 @@
 import { Router } from 'express';
-import { body, param } from 'express-validator';
-import { validate } from '../middlewares/validate';
+import { schemaValidator } from '../middlewares/validatorHandler';
 import { requireAuth } from '../middlewares/auth';
 import * as Controller from '../controllers/userController';
+import {
+  loginSchema,
+  refreshSchema,
+  logoutSchema,
+  updateMeSchema,
+  addAddressSchema,
+  updateAddressSchema,
+  registerSchema,
+  verifyEmailSchema,
+  getUserIdSchema,
+  addressIdParamSchema,
+} from '../schemas/userSchemaJoi';
 
 export const userRouter = Router();
-
-const strongPwd = body('password')
-  .isLength({ min: 8 }).withMessage('password mínimo 8')
-  .matches(/[a-z]/).withMessage('password requiere minúscula')
-  .matches(/[A-Z]/).withMessage('password requiere mayúscula')
-  .matches(/\d/).withMessage('password requiere número');
-
 
 // LOGIN
 userRouter.post(
   '/login',
-  [
-    body('identifier').notEmpty().withMessage('Datos requeridos, inicia sesion con email o cc'),
-  ],
-validate,
+  schemaValidator('body', loginSchema),
   Controller.login
 );
+
 // REFRESH
 userRouter.post(
   '/refresh',
-  [body('refreshToken').notEmpty().withMessage('refreshToken requerido')],
-  validate,
+  schemaValidator('body', refreshSchema),
   Controller.refresh
 );
 
@@ -34,11 +35,10 @@ userRouter.post(
 // invalida el refresh token, ya no se podrá usar para refresh
 userRouter.post(
   '/logout',
-  [body('refreshToken').notEmpty().withMessage('refreshToken requerido')],
-  validate,
+  requireAuth,
+  schemaValidator('body', logoutSchema),
   Controller.logout
 );
-
 
 // LISTAR direcciones del usuario
 userRouter.get(
@@ -53,38 +53,29 @@ userRouter.get(
   requireAuth,
   Controller.getMe
 );
+
 // Actualizar perfil
 userRouter.patch(
   '/me',
   requireAuth,
-  [body('name').optional().isString(), body('phone').optional().isString()],
-  validate,
+  schemaValidator('body', updateMeSchema),
   Controller.updateMe
 );
+
 // agregar la dirección al usuario
 userRouter.post(
   '/me/addresses',
   requireAuth,
-  [
-    body('id').notEmpty(),
-    body('city').notEmpty(),
-    body('postalCode').notEmpty(),
-    body('address').notEmpty(),
-  ],
-  validate,
+  schemaValidator('body', addAddressSchema),
   Controller.addAddress
 );
+
 // ACTUALIZAR dirección por id
 userRouter.patch(
   '/me/addresses/:id',
   requireAuth,
-  [
-    param('id').notEmpty().withMessage('El ID de la dirección en la URL es requerido'),
-    body('city').optional().isString(),
-    body('postalCode').optional().isString(),
-    body('address').optional().isString(),
-  ],
-  validate,
+  schemaValidator('params', addressIdParamSchema),
+  schemaValidator('body', updateAddressSchema),
   Controller.updateAddress
 );
 
@@ -92,22 +83,14 @@ userRouter.patch(
 userRouter.delete(
   '/me/addresses/:id',
   requireAuth,
- [param('id').notEmpty().withMessage('El ID de la dirección es requerido en la URL')],
-  validate,
+  schemaValidator('params', addressIdParamSchema),
   Controller.removeAddress
 );
 
 // registrar usuario nuevo
 userRouter.post(
   '/register',
-  [
-    body('cc').notEmpty().withMessage('La cédula es requerida'),
-    body('email').isEmail().withMessage('El formato del email es inválido'),
-    strongPwd,
-    body('name').notEmpty().withMessage('El nombre es requerido'),
-    body('role').isIn(['admin', 'customer']).withMessage('El rol debe ser admin o customer'),
-  ],
-  validate,
+  schemaValidator('body', registerSchema),
   Controller.register
 );
 
@@ -115,10 +98,7 @@ userRouter.post(
 // Verificar email con token (POST para API)
 userRouter.post(
   '/verify-email',
-  [
-    body('token').notEmpty().withMessage('token requerido'),
-  ],
-  validate,
+  schemaValidator('body', verifyEmailSchema),
   Controller.verifyEmail
 );
 
@@ -139,14 +119,8 @@ userRouter.post(
 // validamos que sea numérico
 userRouter.get(
   '/:id',
-  [
-    param('id')
-      .isInt().withMessage('id debe ser numérico')  // asegura que sea CC numérica
-      .bail()
-  ],
-  validate,
+  schemaValidator('params', getUserIdSchema),
   Controller.getById
 );
 
 //export default userRouter;
-

@@ -1,8 +1,14 @@
 import { Router } from 'express';
-import { body, param } from 'express-validator';
+import { schemaValidator } from '../middlewares/validatorHandler';
 import { requireAuth, requireRole } from '../middlewares/auth';
-import { validate } from '../middlewares/validate';
 import * as Controller from '../controllers/paymentsController';
+import {
+  addPaymentMethodSchema,
+  createPaymentIntentSchema,
+  confirmCardPaymentSchema,
+  methodIdParamSchema,
+  orderIdPaymentParamSchema,
+} from '../schemas/paymentsSchemaJoi';
 
 const router = Router();
 
@@ -19,13 +25,7 @@ router.post(
   '/methods',
   requireAuth,
   requireRole('customer'),
-  [
-    body('type').isIn(['credit_card','debit_card','paypal','transfer','cash_on_delivery']),
-    body('provider').optional().isString(),
-    body('cardNumber').optional().isString(),
-    body('setDefault').optional().isBoolean(),
-  ],
-  validate,
+  schemaValidator('body', addPaymentMethodSchema),
   Controller.addMethod
 );
 
@@ -34,8 +34,7 @@ router.post(
   '/methods/:id/default',
   requireAuth,
   requireRole('customer'),
-  [ param('id').notEmpty() ],
-  validate,
+  schemaValidator('params', methodIdParamSchema),
   Controller.setDefault
 );
 
@@ -44,8 +43,7 @@ router.delete(
   '/methods/:id',
   requireAuth,
   requireRole('customer'),
-  [ param('id').notEmpty() ],
-  validate,
+  schemaValidator('params', methodIdParamSchema),
   Controller.removeMethod
 );
 
@@ -54,13 +52,8 @@ router.post(
   '/orders/:orderId/pay',
   requireAuth,
   requireRole('customer'),
-  [
-    param('orderId').notEmpty(),
-    body('method').optional().isIn(['card','transfer','cod']),
-    body('paymentMethodId').optional().isString(),
-    body('provider').optional().isString(),
-  ],
-  validate,
+  schemaValidator('params', orderIdPaymentParamSchema),
+  schemaValidator('body', createPaymentIntentSchema),
   Controller.createPaymentIntent
 );
 
@@ -69,8 +62,7 @@ router.post(
   '/confirm',
   requireAuth,
   requireRole('customer'),
-  [ body('intentId').notEmpty(), body('succeed').isBoolean() ],
-  validate,
+  schemaValidator('body', confirmCardPaymentSchema),
   Controller.confirmCardPayment
 );
 
@@ -79,8 +71,7 @@ router.post(
   '/admin/:orderId/transfer/confirm',
   requireAuth,
   requireRole('admin'),
-  [ param('orderId').notEmpty() ],
-  validate,
+  schemaValidator('params', orderIdPaymentParamSchema),
   Controller.adminConfirmTransfer
 );
 
@@ -89,10 +80,8 @@ router.post(
   '/admin/:orderId/cod/paid',
   requireAuth,
   requireRole('admin'),
-  [ param('orderId').notEmpty() ],
-  validate,
+  schemaValidator('params', orderIdPaymentParamSchema),
   Controller.adminMarkCodPaid
 );
 
 export default router;
-
