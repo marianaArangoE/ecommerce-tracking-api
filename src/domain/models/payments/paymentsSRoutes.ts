@@ -1,20 +1,19 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import { requireAuth, requireRole, requireAnyRole, AuthReq } from '../../../application/middlewares/auth';
+import { requireAuth, requireRole } from '../../../application/middlewares/auth';
 import { validate } from '../../../application/middlewares/validate';
-import * as Svc from '../../services/paymentsServices'; 
+import * as Controller from './paymentsController';
 
 const router = Router();
+
 // todas las rutas requieren auth y rol customer o admin
 router.get(
   '/methods',
   requireAuth,
   requireRole('customer'),
-  async (req: AuthReq, res) => {
-    const items = await Svc.listMyMethods(req.user!.sub);
-    res.json({ items, total: items.length });
-  }
+  Controller.listMyMethods
 );
+
 //añadir metodo de pago
 router.post(
   '/methods',
@@ -27,17 +26,7 @@ router.post(
     body('setDefault').optional().isBoolean(),
   ],
   validate,
-  async (req: AuthReq, res) => {
-    try {
-      const out = await Svc.addMethod(req.user!.sub, {
-        type: req.body.type,
-        provider: req.body.provider,
-        cardNumber: req.body.cardNumber,
-        setDefault: req.body.setDefault,
-      });
-      res.status(201).json(out);
-    } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
-  }
+  Controller.addMethod
 );
 
 //establecer metodo por defecto
@@ -47,12 +36,7 @@ router.post(
   requireRole('customer'),
   [ param('id').notEmpty() ],
   validate,
-  async (req: AuthReq, res) => {
-    try {
-      const out = await Svc.setDefault(req.user!.sub, req.params.id);
-      res.json(out);
-    } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
-  }
+  Controller.setDefault
 );
 
 //eliminar metodo de pago
@@ -62,14 +46,8 @@ router.delete(
   requireRole('customer'),
   [ param('id').notEmpty() ],
   validate,
-  async (req: AuthReq, res) => {
-    try {
-      const out = await Svc.removeMethod(req.user!.sub, req.params.id);
-      res.json(out);
-    } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
-  }
+  Controller.removeMethod
 );
-
 
 //crear payment intent para una orden
 router.post(
@@ -83,19 +61,9 @@ router.post(
     body('provider').optional().isString(),
   ],
   validate,
-  async (req: AuthReq, res) => {
-    try {
-      const out = await Svc.createPaymentIntent({
-        userId: req.user!.sub,
-        orderId: req.params.orderId,
-        method: req.body.method,               
-        paymentMethodId: req.body.paymentMethodId, 
-        provider: req.body.provider,           
-      });
-      res.status(201).json(out);
-    } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
-  }
+  Controller.createPaymentIntent
 );
+
 //confirmar pago con tarjeta
 router.post(
   '/confirm',
@@ -103,12 +71,7 @@ router.post(
   requireRole('customer'),
   [ body('intentId').notEmpty(), body('succeed').isBoolean() ],
   validate,
-  async (req: AuthReq, res) => {
-    try {
-      const out = await Svc.confirmCardPayment(req.user!.sub, req.body.intentId, Boolean(req.body.succeed));
-      res.json(out);
-    } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
-  }
+  Controller.confirmCardPayment
 );
 
 // ADMIN: confirmar transferencia bancaria
@@ -118,12 +81,7 @@ router.post(
   requireRole('admin'),
   [ param('orderId').notEmpty() ],
   validate,
-  async (req: AuthReq, res) => {
-    try {
-      const out = await Svc.adminConfirmTransfer(req.params.orderId);
-      res.json(out);
-    } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
-  }
+  Controller.adminConfirmTransfer
 );
 
 // ADMIN: marcar COD como pagado
@@ -133,12 +91,7 @@ router.post(
   requireRole('admin'),
   [ param('orderId').notEmpty() ],
   validate,
-  async (req: AuthReq, res) => {
-    try {
-      const out = await Svc.adminMarkCodPaid(req.params.orderId);
-      res.json(out);
-    } catch (e:any) { res.status(e.status || 400).json({ error: e.message }); }
-  }
+  Controller.adminMarkCodPaid
 );
 
 export default router;
