@@ -2,6 +2,11 @@ import { Response } from 'express';
 import { AuthReq } from '../middlewares/auth';
 import * as OrderService from '../../domain/services/orderService';
 import { OrderModel } from '../../domain/models/orders/orderModel';
+import { OrderStatus } from '../../domain/models/orders/orderStatus';
+import {
+  emitOrderTracking,
+  emitOrderCustomerConfirmed,
+} from '../../infrastructure/websockets/socket.gateway';
 
 export const adminSummary = async (req: AuthReq, res: Response) => {
   const from = req.query.from ? new Date(String(req.query.from)) : new Date('1970-01-01');
@@ -141,6 +146,65 @@ export const list = async (req: AuthReq, res: Response) => {
     res.json({ items: data, total: data.length });
   } catch (e: any) {
     res.status(400).json({ error: e.message });
+  }
+};
+
+export const getTracking = async (req: AuthReq, res: Response) => {
+  try {
+    const order = await OrderService.getOrderTracking(req.params.orderId);
+    res.json(order);
+  } catch (e: any) {
+    res.status(e.status || 404).json({ error: e.message });
+  }
+};
+
+export const updateTracking = async (req: AuthReq, res: Response) => {
+  try {
+    const { status } = req.body as { status: OrderStatus };
+    if (!Object.values(OrderStatus).includes(status)) {
+      return res.status(400).json({ error: 'status inválido' });
+    }
+
+    const updated = await OrderService.updateOrderTrackingStatus(
+      req.params.orderId,
+      status,
+      req.user!.sub
+    );
+
+    emitOrderTracking({
+      orderId: updated.orderId,
+      trackingStatus: updated.trackingStatus,
+      trackingHistory: updated.trackingHistory,
+    });
+
+    res.json(updated);
+  } catch (e: any) {
+    res.status(e.status || 400).json({ error: e.message });
+  }
+};
+
+export const confirmDelivery = async (req: AuthReq, res: Response) => {
+  try {
+    const updated = await OrderService.customerConfirmDelivery(
+      req.user!.sub,
+      req.params.orderId
+    );
+
+    emitOrderTracking({
+      orderId: updated.orderId,
+      trackingStatus: updated.trackingStatus,
+      trackingHistory: updated.trackingHistory,
+    });
+
+    emitOrderCustomerConfirmed({
+      orderId: updated.orderId,
+      userId: req.user!.sub,
+      at: new Date().toISOString(),
+    });
+
+    res.json({ ok: true, order: updated });
+  } catch (e: any) {
+    res.status(e.status || 400).json({ error: e.message });
   }
 };
 

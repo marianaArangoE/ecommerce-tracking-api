@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { OrderStatus } from '../../domain/models/orders/orderStatus';
 
 // Campos comunes
 const orderId = Joi.string().required().messages({
@@ -37,6 +38,12 @@ const orderStatus = Joi.string().optional().messages({
   'string.base': 'status debe ser un texto',
 });
 
+const trackingStatus = Joi.string()
+  .valid(...Object.values(OrderStatus))
+  .messages({
+    'any.only': `status debe ser uno de: ${Object.values(OrderStatus).join(', ')}`,
+  });
+
 // Schemas para body
 export const confirmOrderSchema = Joi.object({
   checkoutId: checkoutId,
@@ -53,6 +60,10 @@ export const cancelOrderSchema = Joi.object({
 
 export const adminAutoCancelSchema = Joi.object({
   hours: hours,
+});
+
+export const updateTrackingSchema = Joi.object({
+  status: trackingStatus.required(),
 });
 
 // Schemas para params

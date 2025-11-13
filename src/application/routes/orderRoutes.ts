@@ -13,6 +13,7 @@ import {
   adminSummaryQuerySchema,
   adminTopProductsQuerySchema,
   adminDailyQuerySchema,
+  updateTrackingSchema,
 } from '../schemas/orderSchemaJoi';
 
 const router = Router();
@@ -105,6 +106,40 @@ router.post(
   schemaValidator('params', orderIdParamSchema),
   schemaValidator('body', cancelOrderSchema),
   Controller.cancel
+);
+
+/** GET /api/v1/orders/:orderId/tracking
+ *  Obtener tracking (customer o admin).
+ */
+router.get(
+  '/:orderId/tracking',
+  requireAuth,
+  requireAnyRole(['customer', 'admin']),
+  schemaValidator('params', orderIdParamSchema),
+  Controller.getTracking
+);
+
+/** PATCH /api/v1/orders/:orderId/tracking
+ *  Actualizar tracking (solo admin).
+ */
+router.patch(
+  '/:orderId/tracking',
+  requireAuth,
+  requireRole('admin'),
+  schemaValidator('params', orderIdParamSchema),
+  schemaValidator('body', updateTrackingSchema),
+  Controller.updateTracking
+);
+
+/** POST /api/v1/orders/:orderId/confirm-delivery
+ *  Confirmar entrega (customer).
+ */
+router.post(
+  '/:orderId/confirm-delivery',
+  requireAuth,
+  requireRole('customer'),
+  schemaValidator('params', orderIdParamSchema),
+  Controller.confirmDelivery
 );
 
 /** GET /api/v1/orders/:orderId
