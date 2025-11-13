@@ -1,13 +1,13 @@
 
 import crypto from 'crypto';
 import mongoose, { Types, Model } from 'mongoose';
-import { ProductModel as ProductM } from '../src/domain/models/products/schema';
+import { ProductModel as ProductM } from '../src/infrastructure/schemas/productSchema';
 
-import { CartModel } from '../src/domain/models/shippingCart/model';
-import { CheckoutModel } from '../src/domain/models/checkout/model';
-import { OrderModel } from '../src/domain/models/orders/model';
+import { CartModel } from '../src/domain/models/shippingCart/shippingCartModel';
+import { CheckoutModel } from '../src/domain/models/checkout/checkoutModel';
+import { OrderModel } from '../src/domain/models/orders/orderModel';
 import bcrypt from 'bcrypt';
-import { UserModel } from '../src/domain/models/users/model';
+import { UserModel } from '../src/domain/models/users/userModel';
 
 
 const ProductModel = ProductM as unknown as Model<any>;
@@ -36,7 +36,6 @@ export async function ensureCustomerBase(overrides: Partial<any> = {}) {
     failedLoginCount: 0,
     lockUntil: null,
     refreshTokens: [],
-    // 👇 requeridos por tu schema de User
     createdAt: overrides.createdAt ?? nowISO,
     updatedAt: overrides.updatedAt ?? nowISO,
   });
@@ -52,11 +51,8 @@ export async function createProduct(overrides: Partial<any> = {}) {
       ? new Types.ObjectId(String(overrides._id).padStart(24, '0'))
       : new Types.ObjectId();
 
-  // el schema (de tu compa) exige 'id' string; lo alineamos con _id
+  
   const id = overrides.id ?? String(_id);
-
-  // ⚠️ Tipado: ProductSchema define priceCents como Decimal128.
-  // Conviértelo explícitamente (o castea a any).
   const priceNum = overrides.priceCents ?? 1000;
   const priceDecimal =
     typeof priceNum === 'number'
@@ -68,7 +64,7 @@ export async function createProduct(overrides: Partial<any> = {}) {
     id,
     sku: overrides.sku ?? `SKU_${__skuSeq++}_${crypto.randomBytes(2).toString('hex')}`,
     name: overrides.name ?? 'Prod Demo',
-    priceCents: priceDecimal,            // 👈 ahora sí coincide con el tipo del schema
+    priceCents: priceDecimal,          
     currency: overrides.currency ?? 'COP',
     stock: overrides.stock ?? 20,
     status: overrides.status ?? 'active',
@@ -92,11 +88,8 @@ export async function seedCart(
   const docs: any[] = [];
 
   for (const it of items) {
-    // TS de mongoose a veces no tipa 'getters' en lean(); castea la opción.
     const p = (await ProductModel.findById(it.productId).lean({ getters: true } as any)) as any;
     if (!p) throw new Error(`Producto no encontrado ${it.productId}`);
-
-    // Si no pasaron unitPriceCents, toma el precio del doc (number si getters=true; si no, Decimal128)
     const fromDoc =
       typeof p.priceCents === 'number'
         ? p.priceCents
@@ -148,7 +141,7 @@ export async function seedCheckoutFromCart(overrides: Partial<any> = {}) {
     paymentMethod: overrides.paymentMethod ?? 'card',
     grandTotalCents: cart.subtotalCents + shippingCents,
     status: 'pending',
-    // timestamps automáticos
+
   });
 }
 
@@ -167,6 +160,6 @@ export async function seedOrderFromCheckout(overrides: Partial<any> = {}) {
     currency: ck.currency,
     status: overrides.status ?? 'PENDIENTE',
     paymentStatus: overrides.paymentStatus ?? 'pending',
-    // timestamps automáticos
+ 
   });
 }

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { ProductModel } from '../models/products/model';
+import { ProductModel } from '../models/products/productModel';
 
 // Fecha ISO
 export const nowISO = () => new Date().toISOString();

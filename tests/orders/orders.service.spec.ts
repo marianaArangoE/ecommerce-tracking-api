@@ -1,12 +1,11 @@
-// tests/orders/orders.service.spec.ts
-import { connect, close, clear } from '../setupMongo';
-import * as CheckoutSvc from '../../src/domain/models/checkout/service';
-import * as OrdersSvc from '../../src/domain/models/orders/service';
-import * as CartSvc from '../../src/domain/models/shippingCart/service';
-import { ensureCustomerBase, createProduct } from '../factories';
-import { OrderModel } from '../../src/domain/models/orders/model';
 
-// 🧪 Mock de servicios externos que usa OrdersSvc
+import { connect, close, clear } from '../setupMongo';
+import * as CheckoutSvc from '../../src/domain/services/checkoutService';
+import * as OrdersSvc from '../../src/domain/services/orderService';
+import * as CartSvc from '../../src/domain/services/shippingCartService';
+import { ensureCustomerBase, createProduct } from '../factories';
+import { OrderModel } from '../../src/domain/models/orders/orderModel';
+
 jest.mock('../../src/domain/services/services', () => ({
   verifyAndReserve: jest.fn().mockResolvedValue(true),
   genOrderId: jest.fn().mockReturnValue('ORD-UT-1'),
@@ -40,17 +39,16 @@ describe('Orders Service', () => {
       paymentMethod: 'card',
     });
 
-    // primer confirm
+
     const a = await OrdersSvc.confirmOrder({ userId: 'U1', checkoutId: chk.id, email: 'c@demo.com' });
     expect(a.status).toBe('PENDIENTE');
     expect(a.orderId).toBe('ORD-UT-1');
     expect(SvcMocks.verifyAndReserve).toHaveBeenCalledTimes(1);
     expect(SvcMocks.sendOrderConfirmation).toHaveBeenCalledTimes(1);
 
-    // idempotencia (mismo checkout → misma orden)
     const b = await OrdersSvc.confirmOrder({ userId: 'U1', checkoutId: chk.id, email: 'c@demo.com' });
     expect(b.orderId).toBe(a.orderId);
-    expect(SvcMocks.verifyAndReserve).toHaveBeenCalledTimes(1); // no vuelve a reservar
+    expect(SvcMocks.verifyAndReserve).toHaveBeenCalledTimes(1); 
   });
 
   test('advanceOrderStatus: PENDIENTE → PROCESANDO → COMPLETADA', async () => {
@@ -85,13 +83,11 @@ describe('Orders Service', () => {
       paymentMethod: 'card',
     });
     const ord = await OrdersSvc.confirmOrder({ userId: 'U3', checkoutId: chk.id, email: 'c@demo.com' });
-
-    // cancela su propia orden
     const ok = await OrdersSvc.cancelOrder(ord.orderId, { role: 'customer', userId: 'U3', reason: 'me arrepentí' });
     expect(ok.ok).toBe(true);
     expect(SvcMocks.returnStock).toHaveBeenCalledTimes(1);
 
-    // crear otra orden de otro usuario (pendiente)
+
     await OrderModel.create({
       userId: 'OTHER',
       orderId: 'ORD-OTHER',
@@ -105,7 +101,6 @@ describe('Orders Service', () => {
       updatedAt: new Date().toISOString(),
     });
 
-    // U3 NO puede cancelar la de OTHER
     await expect(
       OrdersSvc.cancelOrder('ORD-OTHER', { role: 'customer', userId: 'U3' })
     ).rejects.toThrow(/FORBIDDEN/);

@@ -1,5 +1,5 @@
-import { register, login, refresh, logout, getById, updateMe, verifyEmail, resendVerificationEmail, generateAndSendVerificationToken } from '../../../../../src/domain/models/users/service';
-import { UserModel } from '../../../../../src/domain/models/users/model';
+import { register, login, refresh, logout, getById, updateMe, verifyEmail, resendVerificationEmail, generateAndSendVerificationToken } from '../../../../../src/domain/services/userService';
+import { UserModel } from '../../../../../src/domain/models/users/userModel';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
