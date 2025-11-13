@@ -1,11 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import usersRoutes from './domain/models/users/routes';
-import cartsRouter from './domain/models/shippingCart/routes';
-import checkoutRoutes from './domain/models/checkout/routes';
-import ordersRoutes from './domain/models/orders/routes';
-import paymentsRoutes from './domain/models/payments/routes';
-import { productRouter } from './domain/models/products/routes';
+import { userRouter as usersRoutes } from './application/routes/userRoutes';
+import cartsRouter from './application/routes/shippingCartRoutes';
+import checkoutRoutes from './application/routes/checkoutRoutes';
+import ordersRoutes from './application/routes/orderRoutes';
+import paymentsRoutes from './application/routes/paymentsRoutes';
+import { productRouter } from './application/routes/productRoutes';
+
 
 const corsOrigins = (process.env.CLIENT_ORIGINS ?? 'http://localhost:5173')
   .split(',')
