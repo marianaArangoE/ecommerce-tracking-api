@@ -24,7 +24,7 @@ type LoginInput = { identifier: string; password: string };
 // filtrar los datos sensibles
 function toPublic(u: any) {
   const id = u.id ?? u._id?.toString?.() ?? u._id;
-  return {
+  const publicUser: Record<string, any> = {
     id,
     email: u.email,
     name: u.name,
@@ -34,6 +34,12 @@ function toPublic(u: any) {
     createdAt: u.createdAt,
     addresses: u.addresses ?? [],
   };
+
+  if (!u.emailVerified && u.emailVerificationToken) {
+    publicUser.emailVerificationToken = u.emailVerificationToken;
+  }
+
+  return publicUser;
 }
 //determinar el bloqueo de la cuenta
 function addMinutes(d: Date, mins: number) {
@@ -238,6 +244,7 @@ export async function getMe(userId: string) {
 type UpdateMeInput = Partial<{
   name: string;
   phone: string;
+  password: string;
 }>;
 export async function updateMe(
   userId: string,
@@ -253,6 +260,13 @@ export async function updateMe(
   if (typeof data.phone === 'string') {
     const phone = data.phone.trim();
     if (phone.length > 0) update.phone = phone;
+  }
+  if (typeof data.password === 'string') {
+    const password = data.password.trim();
+    if (password.length > 0) {
+      const passwordHash = await bcrypt.hash(password, ROUNDS);
+      update.passwordHash = passwordHash;
+    }
   }
   //
   if (Object.keys(update).length === 0) {

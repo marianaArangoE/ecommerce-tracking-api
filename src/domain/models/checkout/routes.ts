@@ -4,7 +4,7 @@ import { requireCustomerWithVerifiedEmail, AuthReq } from '../../../application/
 
 const router = Router();
 
-// POST /api/checkout  { addressId, shippingMethod, paymentMethod }
+// POST /api/checkout  { addressId, shippingMethod, paymentMethod, shippingCents? }
 router.post('/', requireCustomerWithVerifiedEmail, async (req: AuthReq, res) => {
   try {
     const userId = req.user!.sub;
@@ -13,6 +13,7 @@ router.post('/', requireCustomerWithVerifiedEmail, async (req: AuthReq, res) => 
       addressId: req.body.addressId,
       shippingMethod: req.body.shippingMethod,
       paymentMethod: req.body.paymentMethod,
+      shippingCents: req.body.shippingCents,
     });
     res.status(201).json(chk);
   } catch (e:any) { res.status(400).json({ error: e.message }); }

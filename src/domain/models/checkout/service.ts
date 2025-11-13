@@ -62,8 +62,9 @@ export async function createCheckout(params: {
   addressId: string;                         
   shippingMethod: 'standard'|'express';
   paymentMethod: 'card'|'transfer'|'cod';
+  shippingCents?: number;
 }) {
-  const { userId, addressId, shippingMethod, paymentMethod } = params;
+  const { userId, addressId, shippingMethod, paymentMethod, shippingCents } = params;
 
   // 1) traer y validar address desde el user
   const user = await UserModel.findById(userId).lean();
@@ -75,20 +76,31 @@ export async function createCheckout(params: {
   // 2) confirmar items + verificación final de stock/estado
   const snap = await buildItemsFromCart(userId);
 
-const pids = snap.items.map(i => i.productId);
-const prods = await ProductModel.find({ _id: { $in: pids } }, { _id:1, weight:1 }).lean();
-const mapProds = new Map(prods.map(p => [String(p._id), p]));
+  // Si shippingCents viene del frontend, lo usamos directamente; si no, lo calculamos
+  let finalShippingCents: number;
+  if (shippingCents !== undefined && shippingCents !== null) {
+    // Validar que el valor enviado sea un número válido y positivo
+    if (typeof shippingCents !== 'number' || shippingCents < 0) {
+      throw new Error('shippingCents debe ser un número mayor o igual a 0');
+    }
+    finalShippingCents = shippingCents;
+  } else {
+    // Calcular shippingCents si no se proporciona desde el frontend
+    const pids = snap.items.map(i => i.productId);
+    const prods = await ProductModel.find({ _id: { $in: pids } }, { _id:1, weight:1 }).lean();
+    const mapProds = new Map(prods.map(p => [String(p._id), p]));
 
-// peso total (kg) y distancia estimada (km)
-const totalWeightKg = totalWeightKgOfItems(
-  snap.items.map(i => ({ productId: i.productId, quantity: i.quantity })),
-  mapProds
-);
-const distanceKm = estimateDistanceKm(address);
+    // peso total (kg) y distancia estimada (km)
+    const totalWeightKg = totalWeightKgOfItems(
+      snap.items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+      mapProds
+    );
+    const distanceKm = estimateDistanceKm(address);
 
-// costo de envío por peso/distancia + método (mantiene envío gratis si aplica)
-const shippingCents = calcShippingCentsByWD(snap.subtotalCents, totalWeightKg, distanceKm, shippingMethod);
-const grandTotalCents = snap.subtotalCents + shippingCents;
+    // costo de envío por peso/distancia + método (mantiene envío gratis si aplica)
+    finalShippingCents = calcShippingCentsByWD(snap.subtotalCents, totalWeightKg, distanceKm, shippingMethod);
+  }
+  const grandTotalCents = snap.subtotalCents + finalShippingCents;
   // 4) crear checkout (con snapshot de address)
   const payload = {
     userId,
@@ -98,7 +110,7 @@ const grandTotalCents = snap.subtotalCents + shippingCents;
     addressId,
     addressSnapshot: address,         // ← guardamos snapshot
     shippingMethod,
-    shippingCents,
+    shippingCents: finalShippingCents,
     paymentMethod,
     grandTotalCents,
     status: 'pending' as const,

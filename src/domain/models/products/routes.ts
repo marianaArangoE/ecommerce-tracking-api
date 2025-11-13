@@ -33,7 +33,7 @@ productRouter.post(
 productRouter.patch(
   "/:id",
   requireAuth,
-  requireRole("admin"),
+  requireAnyRole(["customer", "admin"]),
   schemaValidator("body", updateProductSchema),
   productController.updateProduct
 );

@@ -21,20 +21,20 @@ export interface Product {
   updatedAt: string; // Fecha de actualización
 }
 
-export interface ProductCreate {
-  sku: string;
-  name: string;
-  description?: string;
-  priceCents: number;
-  currency: string;
-  stock: number;
-  status: ProductStatus;
-  categoryId?: string;
-  images: string[];
-  brand?: string;
-  tags?: string[];
-  createdAt: string;
-}
+  export interface ProductCreate {
+    sku: string;
+    name: string;
+    description?: string;
+    priceCents: number;
+    currency: string;
+    stock: number;
+    status: ProductStatus;
+    categoryId?: string;
+    images: string[];
+    brand?: string;
+    tags?: string[];
+    createdAt: string;
+  }
 
 export interface ProductUpdate extends Partial<ProductCreate> {}
 

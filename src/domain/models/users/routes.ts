@@ -12,6 +12,13 @@ const strongPwd = body('password')
   .matches(/[A-Z]/).withMessage('password requiere mayúscula')
   .matches(/\d/).withMessage('password requiere número');
 
+const optionalStrongPwd = body('password')
+  .optional()
+  .isLength({ min: 8 }).withMessage('password mínimo 8')
+  .matches(/[a-z]/).withMessage('password requiere minúscula')
+  .matches(/[A-Z]/).withMessage('password requiere mayúscula')
+  .matches(/\d/).withMessage('password requiere número');
+
 
 // LOGIN
 router.post(
@@ -84,12 +91,17 @@ router.get(
 router.patch(
   '/me',
   requireAuth,
-  [body('name').optional().isString(), body('phone').optional().isString()],
+  [
+    body('name').optional().isString(),
+    body('phone').optional().isString(),
+    optionalStrongPwd,
+  ],
   validate,
   async (req: AuthReq, res: Response) => {
     const me = await UserSvc.updateMe(req.user!.sub, {
       name: req.body.name,
       phone: req.body.phone,
+      password: req.body.password,
     });
     res.json(me);
   }
