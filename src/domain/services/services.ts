@@ -96,8 +96,5 @@ export async function returnStock(
   }
 }
 
-/** Email stub – integra nodemailer luego */
-export async function sendOrderConfirmation(to: string, orderId: string) {
-  // TODO: integrar proveedor real
-  console.log(`[EMAIL] Confirmación enviada a ${to}: ${orderId}`);
-}
+/** Email de confirmación de orden - ahora usando emailService */
+export { sendOrderConfirmation } from './emailService';

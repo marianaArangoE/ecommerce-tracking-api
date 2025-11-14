@@ -44,6 +44,7 @@ export const updateMe = async (req: AuthReq, res: Response) => {
   const me = await UserSvc.updateMe(req.user!.sub, {
     name: req.body.name,
     phone: req.body.phone,
+    password: req.body.password,
   });
   res.json(me);
 };

@@ -16,6 +16,32 @@ const password = Joi.string()
     'string.pattern.base': 'password requiere minúscula, mayúscula y número',
   });
 
+// Para actualización: permite vacío/null si es opcional, pero valida si está presente y no vacío
+const passwordOptional = Joi.string()
+  .allow('', null) // Permite cadena vacía o null
+  .custom((value, helpers) => {
+    // Si no hay valor, null, o está vacío, está permitido (es opcional)
+    if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+      return value;
+    }
+    // Si tiene valor, validar manualmente con las reglas de password
+    const trimmed = typeof value === 'string' ? value.trim() : String(value);
+    if (trimmed.length < 8) {
+      return helpers.error('string.min', { message: 'password mínimo 8' });
+    }
+    if (!/[a-z]/.test(trimmed)) {
+      return helpers.error('any.custom', { message: 'password requiere minúscula, mayúscula y número' });
+    }
+    if (!/[A-Z]/.test(trimmed)) {
+      return helpers.error('any.custom', { message: 'password requiere minúscula, mayúscula y número' });
+    }
+    if (!/\d/.test(trimmed)) {
+      return helpers.error('any.custom', { message: 'password requiere minúscula, mayúscula y número' });
+    }
+    return value;
+  })
+  .optional();
+
 const email = Joi.string().email().messages({
   'string.email': 'El formato del email es inválido',
   'any.required': 'El email es requerido',
@@ -93,6 +119,7 @@ export const logoutSchema = Joi.object({
 export const updateMeSchema = Joi.object({
   name: name.optional(),
   phone: phone,
+  password: passwordOptional.optional(),
 }).min(1).messages({
   'object.min': 'Debe proporcionar al menos un campo para actualizar',
 });

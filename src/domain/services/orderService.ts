@@ -6,10 +6,10 @@ import { UserModel } from '../models/users/userModel';
 import {
   verifyAndReserve,
   genOrderId,
-  sendOrderConfirmation,
   nowISO,
   returnStock,
 } from './services';
+import { sendOrderConfirmation, OrderEmailData } from './emailService';
 import { OrderStatus } from '../models/orders/orderStatus'; 
 
 export type OrderTrackingDTO = {
@@ -56,7 +56,43 @@ export async function confirmOrder(params: { userId: string; checkoutId: string;
     { $set: { items: [], subtotalCents: 0, updatedAt: nowISO() } }
   );
 
-  await sendOrderConfirmation(email, orderId);
+  // Obtener datos del usuario para el email
+  const user = await UserModel.findById(userId).lean();
+  const customerName = user?.name || 'Cliente';
+
+  // Preparar datos para el email
+  const emailData: OrderEmailData = {
+    orderId: order.orderId,
+    customerName,
+    customerEmail: email,
+    items: ck.items.map(item => ({
+      name: item.name,
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents,
+      totalCents: item.totalCents,
+    })),
+    subtotalCents: ck.subtotalCents,
+    shippingCents: ck.shippingCents || 0,
+    totalCents: ck.grandTotalCents,
+    currency: ck.currency,
+    address: {
+      city: ck.addressSnapshot.city,
+      postalCode: ck.addressSnapshot.postalCode,
+      address: ck.addressSnapshot.address,
+    },
+    shippingMethod: ck.shippingMethod,
+    paymentMethod: ck.paymentMethod,
+    createdAt: order.createdAt,
+  };
+
+  // Enviar email de confirmación (no bloquea si falla)
+  try {
+    await sendOrderConfirmation(emailData);
+  } catch (error) {
+    console.error('Error al enviar email de confirmación:', error);
+    // No lanzar error para no romper el flujo de creación de orden
+  }
 
   return order.toJSON();
 }
