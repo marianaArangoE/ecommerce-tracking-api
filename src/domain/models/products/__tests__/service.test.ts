@@ -1,5 +1,4 @@
 
-// Mock the model module before importing the service
 jest.mock(
   "../model",
   () => ({
@@ -13,8 +12,8 @@ jest.mock(
   { virtual: true }
 );
 
-import { productService } from "../service";
-import * as ModelModule from "../model";
+import { productService } from "../../../services/productService";
+import * as ModelModule from "../productModel";
 
 const mocked = (ModelModule as any).ProductModel as {
   find: jest.Mock;
@@ -26,6 +25,7 @@ const mocked = (ModelModule as any).ProductModel as {
 describe("productService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it("getAllProducts returns result when found", async () => {
@@ -59,7 +59,7 @@ describe("productService", () => {
     );
   });
 
-  it("getAllProductsCustomer queries stock>0 and active status", async () => {
+  it("getAllProductsCustomer queries stock>0 and status active and returns result", async () => {
     mocked.find.mockResolvedValue([{ id: "c1" }]);
     const res = await productService.getAllProductsCustomer();
     expect(res).toEqual([{ id: "c1" }]);

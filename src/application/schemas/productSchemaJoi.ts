@@ -55,7 +55,7 @@ const currency = Joi.string()
   .messages({
     "any.only": "La moneda debe ser una de: COP, USD, EUR o MXN, sino de malas",
   });
-const stock = Joi.number().integer().min(1).max(9999);
+const stock = Joi.number().integer().min(0).max(9999);
 const status = Joi.string().valid("draft", "active", "archived");
 const categoryId = Joi.string().optional();
 const images = Joi.array().items(Joi.string().uri()).min(1);

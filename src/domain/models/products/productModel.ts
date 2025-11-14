@@ -1,6 +1,6 @@
 export type ProductStatus = "draft" | "active" | "archived";
 import { model, Schema, Types } from "mongoose";
-import { ProductSchema } from "./schema";
+import { ProductSchema } from "../../../infrastructure/schemas/productSchema";
 export interface Product {
   id: string;
   sku: string;

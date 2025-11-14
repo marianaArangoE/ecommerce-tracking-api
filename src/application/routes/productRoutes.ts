@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { productController } from "./controller";
-import { schemaValidator } from "../../../application/middlewares/validatorHandler";
-import { createProductSchema, updateProductSchema } from "./productSchema";
+import { productController } from "../controllers/productController";
+import { schemaValidator } from "../middlewares/validatorHandler";
+import { createProductSchema, updateProductSchema } from "../schemas/productSchemaJoi";
 import {
   requireAuth,
   requireRole,
   requireAnyRole,
   AuthReq,
-} from "../../../application/middlewares/auth";
+} from "../middlewares/auth";
 
 export const productRouter = Router();
 
@@ -33,7 +33,7 @@ productRouter.post(
 productRouter.patch(
   "/:id",
   requireAuth,
-  requireRole("admin"),
+  requireAnyRole(["customer", "admin"]),
   schemaValidator("body", updateProductSchema),
   productController.updateProduct
 );

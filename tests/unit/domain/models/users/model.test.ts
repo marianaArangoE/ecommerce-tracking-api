@@ -1,4 +1,4 @@
-import { User, UserRole, Address } from '../../../../../src/domain/models/users/model';
+import { User, UserRole, Address } from '../../../../../src/domain/models/users/userModel';
 
 describe('User Model', () => {
   describe('User Interface', () => {

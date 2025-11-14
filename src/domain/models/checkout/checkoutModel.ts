@@ -19,7 +19,7 @@
 
 // src/domain/models/checkout/model.ts
 import { model, Types } from 'mongoose';
-import { CheckoutSchema } from './schema';
+import { CheckoutSchema } from '../../../infrastructure/schemas/checkoutSchema';
 
 export type ShippingMethod = 'standard'|'express';
 export type PaymentMethod  = 'card'|'transfer'|'cod';

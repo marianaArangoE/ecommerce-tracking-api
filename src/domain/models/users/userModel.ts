@@ -1,5 +1,5 @@
 export type UserRole = 'admin' | 'customer';
-import { UserSchema } from './schema';
+import { UserSchema } from '../../../infrastructure/schemas/userSchema';
 import { model } from 'mongoose';
 export interface Address { 
   id: string; 

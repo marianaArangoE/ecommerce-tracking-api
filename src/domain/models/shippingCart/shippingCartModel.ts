@@ -1,5 +1,5 @@
 import { model, Types } from 'mongoose';
-import { CartSchema } from './schema';
+import { CartSchema } from '../../../infrastructure/schemas/shippingCartSchema';
 export type Currency = 'COP' | 'USD';
 export interface CartItem {
   productId: string;

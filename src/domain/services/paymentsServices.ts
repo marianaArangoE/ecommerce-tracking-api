@@ -1,7 +1,7 @@
 
 import crypto from 'crypto';
-import { PaymentMethodModel, PaymentIntentModel } from './model';
-import { OrderModel } from '../orders/model';
+import { PaymentMethodModel, PaymentIntentModel } from '../models/payments/paymentsModel';
+import { OrderModel } from '../models/orders/orderModel';
 
 const nowISO = () => new Date().toISOString();
 const newId = (p: string) => `${p}_${crypto.randomBytes(8).toString('hex')}`;

@@ -1,6 +1,6 @@
 import { Response, Request, NextFunction } from "express";
-import { productService } from "./service";
-import { ProductCreate, ProductUpdate } from "./model";
+import { productService } from "../../domain/services/productService";
+import { ProductCreate, ProductUpdate } from "../../domain/models/products/productModel";
 
 
 const getAllProducts = async (
