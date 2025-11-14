@@ -1,4 +1,4 @@
-import { UserSchema, AddressSchema } from '../../../../../src/domain/models/users/schema';
+import { UserSchema, AddressSchema } from '../../../../../src/infrastructure/schemas/userSchema';
 
 describe('User Schema', () => {
   describe('AddressSchema', () => {

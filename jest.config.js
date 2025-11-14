@@ -35,7 +35,6 @@ module.exports = {
         '<rootDir>/tests/integration/**/*.spec.ts',
         '<rootDir>/tests/integration/**/*.test.ts',
       ],
-      // 👇 solo integración usa Mongo en memoria
       setupFilesAfterEnv: ['<rootDir>/tests/setupMongo.ts'],
       roots: ['<rootDir>/tests/integration'],
     },
