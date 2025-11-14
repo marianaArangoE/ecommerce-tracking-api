@@ -1,33 +1,40 @@
 import request from 'supertest';
 import express from 'express';
-import { userRouter as userRoutes } from '../../../../../src/application/routes/userRoutes';
 import * as UserSvc from '../../../../../src/domain/services/userService';
-import { validate } from '../../../../../src/application/middlewares/validate';
+import { boomErrorHandler, genericErrorHandler } from '../../../../../src/application/middlewares/errorHandle';
+
+// Mock de las dependencias ANTES de importar las rutas
+jest.mock('../../../../../src/domain/services/userService');
+jest.mock('../../../../../src/application/middlewares/validatorHandler', () => ({
+  schemaValidator: jest.fn(() => (req: any, res: any, next: any) => next())
+}));
+jest.mock('../../../../../src/application/middlewares/auth', () => ({
+  requireAuth: jest.fn((req: any, res: any, next: any) => {
+    req.user = { sub: '12345678', role: 'customer', emailVerified: true };
+    next();
+  }),
+  requireRole: jest.fn(() => (req: any, res: any, next: any) => next()),
+  requireAnyRole: jest.fn(() => (req: any, res: any, next: any) => next()),
+}));
+
+// Ahora importar las rutas después de configurar los mocks
+import { userRouter as userRoutes } from '../../../../../src/application/routes/userRoutes';
 import { requireAuth } from '../../../../../src/application/middlewares/auth';
 
-// Mock de las dependencias
-jest.mock('../../../../../src/domain/models/users/service');
-jest.mock('../../../../../src/application/middlewares/validate');
-jest.mock('../../../../../src/application/middlewares/auth');
-
 const mockUserSvc = UserSvc as jest.Mocked<typeof UserSvc>;
-const mockValidate = validate as jest.MockedFunction<typeof validate>;
 const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>;
 
 // Crear app de Express para pruebas
 const app = express();
 app.use(express.json());
 app.use('/users', userRoutes);
+app.use(boomErrorHandler);
+app.use(genericErrorHandler);
 
 describe('User Routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Configurar mocks para que pasen por defecto
-    mockValidate.mockImplementation((req, res, next) => next());
-    mockRequireAuth.mockImplementation((req, res, next) => {
-      req.user = { sub: '12345678', role: 'customer', emailVerified: true };
-      next();
-    });
+    // Los mocks ya están configurados en jest.mock, solo necesitamos limpiar las llamadas
   });
 
   describe('POST /users/register', () => {
@@ -131,47 +138,22 @@ describe('User Routes', () => {
         password: 'wrong-password'
       };
 
-      const error = new Error('INVALID_CREDENTIALS') as any;
+      const error: any = new Error('INVALID_CREDENTIALS');
       error.status = 401;
       mockUserSvc.login.mockRejectedValue(error);
 
       const response = await request(app)
         .post('/users/login')
-        .send(loginData)
-        .expect(401);
+        .send(loginData);
 
+      // El controlador debería manejar el error y retornar el status correcto
+      expect(response.status).toBe(401);
       expect(response.body.error).toBe('INVALID_CREDENTIALS');
     });
   });
 
-  describe('GET /users', () => {
-    it('debería listar usuarios', async () => {
-      const mockUsers = {
-        items: [
-          {
-            id: '12345678',
-            email: 'user1@example.com',
-            name: 'User 1',
-            phone: '1234567890',
-            role: 'customer',
-            emailVerified: true,
-            createdAt: new Date().toISOString(),
-            addresses: []
-          }
-        ],
-        total: 1
-      };
-
-      mockUserSvc.list.mockResolvedValue(mockUsers);
-
-      const response = await request(app)
-        .get('/users')
-        .expect(200);
-
-      expect(response.body).toEqual(mockUsers);
-      expect(mockUserSvc.list).toHaveBeenCalled();
-    });
-  });
+  // Nota: No hay ruta GET /users para listar todos los usuarios
+  // Solo existe GET /users/:id para obtener un usuario específico
 
   describe('GET /users/me', () => {
     it('debería obtener perfil del usuario autenticado', async () => {

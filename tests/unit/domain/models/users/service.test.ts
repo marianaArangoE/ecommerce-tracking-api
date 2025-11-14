@@ -1,10 +1,10 @@
-import { register, login, refresh, logout, getById, updateMe, verifyEmail, resendVerificationEmail, generateAndSendVerificationToken } from '../../../../../src/domain/services/userService';
+import { register, login, refresh, logout, getById, updateMe, verifyEmail, resendVerificationEmail, generateAndSendVerificationToken, getAddresses, addAddress, updateAddress, removeAddress, getMe } from '../../../../../src/domain/services/userService';
 import { UserModel } from '../../../../../src/domain/models/users/userModel';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 // Mock de las dependencias
-jest.mock('../../../../../src/domain/models/users/model');
+jest.mock('../../../../../src/domain/models/users/userModel');
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 jest.mock('../../../../../src/domain/services/emailService', () => ({
@@ -537,6 +537,298 @@ describe('User Service', () => {
         message: 'USER_NOT_FOUND',
         status: 404
       });
+    });
+  });
+
+  describe('getMe', () => {
+    it('debería obtener perfil del usuario exitosamente', async () => {
+      const userId = '12345678';
+      const mockUser = {
+        _id: userId,
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '1234567890',
+        role: 'customer',
+        emailVerified: true,
+        createdAt: new Date().toISOString(),
+        addresses: [],
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser as any);
+
+      const result = await getMe(userId);
+
+      expect(result).toBeDefined();
+      expect(result.id).toBe(userId);
+    });
+
+    it('debería fallar si usuario no existe', async () => {
+      mockUserModel.findById.mockResolvedValue(null);
+
+      await expect(getMe('nonexistent')).rejects.toMatchObject({
+        message: 'USER_NOT_FOUND',
+        status: 404,
+      });
+    });
+  });
+
+  describe('getAddresses', () => {
+    it('debería obtener direcciones exitosamente', async () => {
+      const userId = '12345678';
+      const mockAddresses = [
+        { id: 'addr1', city: 'Medellín', postalCode: '050001', address: 'Calle 1' },
+      ];
+      const mockUser = {
+        _id: userId,
+        addresses: mockAddresses,
+      };
+
+      (mockUserModel.findById as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue(mockUser),
+        }),
+      });
+
+      const result = await getAddresses(userId);
+
+      expect(result).toEqual(mockAddresses);
+    });
+
+    it('debería fallar con userId inválido', async () => {
+      await expect(getAddresses('' as any)).rejects.toMatchObject({
+        message: 'INVALID_USER_ID',
+        status: 400,
+      });
+    });
+
+    it('debería fallar si usuario no existe', async () => {
+      (mockUserModel.findById as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue(null),
+        }),
+      });
+
+      await expect(getAddresses('nonexistent')).rejects.toMatchObject({
+        message: 'USER_NOT_FOUND',
+        status: 404,
+      });
+    });
+  });
+
+  describe('addAddress', () => {
+    it('debería agregar dirección exitosamente', async () => {
+      const userId = '12345678';
+      const newAddress = {
+        id: 'addr1',
+        city: 'Medellín',
+        postalCode: '050001',
+        address: 'Calle 1',
+      };
+      const mockUser = {
+        _id: userId,
+        addresses: [],
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser as any);
+
+      const result = await addAddress(userId, newAddress);
+
+      expect(result).toContainEqual(newAddress);
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    it('debería fallar con userId inválido', async () => {
+      await expect(
+        addAddress('' as any, { id: 'addr1', city: 'Medellín', postalCode: '050001', address: 'Calle 1' })
+      ).rejects.toMatchObject({
+        message: 'INVALID_USER_ID',
+        status: 400,
+      });
+    });
+
+    it('debería fallar con datos de dirección inválidos', async () => {
+      await expect(
+        addAddress('12345678', null as any)
+      ).rejects.toMatchObject({
+        message: 'INVALID_ADDRESS_DATA',
+        status: 400,
+      });
+    });
+
+    it('debería fallar si dirección con mismo ID ya existe', async () => {
+      const userId = '12345678';
+      const existingAddress = { id: 'addr1', city: 'Medellín', postalCode: '050001', address: 'Calle 1' };
+      const mockUser = {
+        _id: userId,
+        addresses: [existingAddress],
+        save: jest.fn(),
+      };
+
+      mockUserModel.findById.mockResolvedValue(mockUser as any);
+
+      await expect(
+        addAddress(userId, existingAddress)
+      ).rejects.toMatchObject({
+        message: 'ADDRESS_ID_TAKEN',
+        status: 409,
+      });
+    });
+  });
+
+  describe('updateAddress', () => {
+    it('debería actualizar dirección exitosamente', async () => {
+      const userId = '12345678';
+      const addrId = 'addr1';
+      const updateData = { city: 'Bogotá' };
+      const mockUpdatedUser = {
+        _id: userId,
+        addresses: [
+          { id: 'addr1', city: 'Bogotá', postalCode: '050001', address: 'Calle 1' },
+        ],
+      };
+
+      (mockUserModel.findOneAndUpdate as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockUpdatedUser),
+      });
+      (mockUserModel.exists as jest.Mock).mockResolvedValue(true);
+
+      const result = await updateAddress(userId, addrId, updateData);
+
+      expect(result).toBeDefined();
+      expect(result.city).toBe('Bogotá');
+    });
+
+    it('debería fallar con userId inválido', async () => {
+      await expect(
+        updateAddress('' as any, 'addr1', { city: 'Bogotá' })
+      ).rejects.toMatchObject({
+        message: 'INVALID_USER_ID',
+        status: 400,
+      });
+    });
+
+    it('debería fallar con addrId inválido', async () => {
+      await expect(
+        updateAddress('12345678', '' as any, { city: 'Bogotá' })
+      ).rejects.toMatchObject({
+        message: 'INVALID_ADDRESS_ID',
+        status: 400,
+      });
+    });
+
+    it('debería fallar si no hay campos para actualizar', async () => {
+      (mockUserModel.findOneAndUpdate as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(
+        updateAddress('12345678', 'addr1', {})
+      ).rejects.toMatchObject({
+        message: 'NO_FIELDS_TO_UPDATE',
+        status: 400,
+      });
+    });
+
+    it('debería fallar si dirección no existe', async () => {
+      (mockUserModel.findOneAndUpdate as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+      (mockUserModel.exists as jest.Mock).mockResolvedValue(true);
+
+      await expect(
+        updateAddress('12345678', 'addr999', { city: 'Bogotá' })
+      ).rejects.toMatchObject({
+        message: 'ADDRESS_NOT_FOUND',
+        status: 404,
+      });
+    });
+  });
+
+  describe('removeAddress', () => {
+    it('debería eliminar dirección exitosamente', async () => {
+      const userId = '12345678';
+      const addrId = 'addr1';
+      const mockResult = {
+        _id: userId,
+        addresses: [],
+      };
+
+      (mockUserModel.findOneAndUpdate as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockResult),
+      });
+
+      const result = await removeAddress(userId, addrId);
+
+      expect(result).toEqual([]);
+    });
+
+    it('debería fallar si usuario no existe', async () => {
+      (mockUserModel.findOneAndUpdate as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+      (mockUserModel.exists as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        removeAddress('nonexistent', 'addr1')
+      ).rejects.toMatchObject({
+        message: 'USER_NOT_FOUND',
+        status: 404,
+      });
+    });
+
+    it('debería fallar si dirección no existe', async () => {
+      (mockUserModel.findOneAndUpdate as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+      (mockUserModel.exists as jest.Mock).mockResolvedValue(true);
+
+      await expect(
+        removeAddress('12345678', 'addr999')
+      ).rejects.toMatchObject({
+        message: 'ADDRESS_NOT_FOUND',
+        status: 404,
+      });
+    });
+  });
+
+  describe('updateMe - casos edge', () => {
+    it('debería fallar si no hay campos para actualizar', async () => {
+      await expect(
+        updateMe('12345678', {})
+      ).rejects.toMatchObject({
+        message: 'NO_FIELDS_TO_UPDATE',
+        status: 400,
+      });
+    });
+
+    it('debería actualizar solo password', async () => {
+      const userId = '12345678';
+      const mockUser = {
+        _id: userId,
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'customer',
+        emailVerified: true,
+        createdAt: new Date().toISOString(),
+        addresses: [],
+      };
+
+      mockUserModel.findByIdAndUpdate.mockResolvedValue(mockUser as any);
+      mockBcrypt.hash.mockResolvedValue('new-hashed-password' as never);
+
+      const result = await updateMe(userId, { password: 'NewPassword123' });
+
+      expect(result).toBeDefined();
+      expect(mockBcrypt.hash).toHaveBeenCalled();
+    });
+
+    it('debería lanzar error si todos los campos están vacíos', async () => {
+      const userId = '12345678';
+
+      await expect(
+        updateMe(userId, { name: '   ', phone: '   ' })
+      ).rejects.toThrow('NO_FIELDS_TO_UPDATE');
     });
   });
 });

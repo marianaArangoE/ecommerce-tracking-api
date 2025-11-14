@@ -1,22 +1,18 @@
 
-jest.mock(
-  "../model",
-  () => ({
-    ProductModel: {
-      find: jest.fn(),
-      findOne: jest.fn(),
-      create: jest.fn(),
-      updateOne: jest.fn(),
-      deleteOne: jest.fn(),
-    },
-  }),
-  { virtual: true }
-);
+jest.mock("../productModel", () => ({
+  ProductModel: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    updateOne: jest.fn(),
+    deleteOne: jest.fn(),
+  },
+}));
 
 import { productService } from "../../../services/productService";
 import * as ModelModule from "../productModel";
 
-const mocked = (ModelModule as any).ProductModel as {
+const mocked = ModelModule.ProductModel as any as {
   find: jest.Mock;
   findOne: jest.Mock;
   create: jest.Mock;
@@ -122,18 +118,22 @@ describe("productService", () => {
     );
   });
 
-  it("deleteProduct deletes product when exists (deleteOne) and returns result", async () => {
+  it("deleteProduct archives product when exists (updateOne) and returns result", async () => {
     mocked.findOne.mockResolvedValue({ id: "d1" });
-    mocked.deleteOne.mockResolvedValue({ deletedCount: 1 });
+    mocked.updateOne.mockResolvedValue({ modifiedCount: 1 });
     const res = await productService.deleteProduct("d1");
     expect(mocked.findOne).toHaveBeenCalledWith({ id: "d1" });
-    expect(mocked.deleteOne).toHaveBeenCalledWith({ id: "d1" });
-    expect(res).toEqual({ deletedCount: 1 });
+    expect(mocked.updateOne).toHaveBeenCalledWith(
+      { id: "d1" },
+      { $set: { status: "archived" } },
+      { runValidators: true }
+    );
+    expect(res).toEqual({ modifiedCount: 1 });
   });
 
-  it("deleteProduct throws when nothing deleted", async () => {
+  it("deleteProduct throws when updateOne returns falsy", async () => {
     mocked.findOne.mockResolvedValue({ id: "d2" });
-    mocked.deleteOne.mockResolvedValue({ deletedCount: 0 });
+    mocked.updateOne.mockResolvedValue(null);
     await expect(productService.deleteProduct("d2")).rejects.toHaveProperty(
       "output.statusCode",
       500

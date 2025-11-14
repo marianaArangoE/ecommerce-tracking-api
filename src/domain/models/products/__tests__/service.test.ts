@@ -1,21 +1,17 @@
 
-jest.mock(
-  "../model",
-  () => ({
-    ProductModel: {
-      find: jest.fn(),
-      findOne: jest.fn(),
-      create: jest.fn(),
-      updateOne: jest.fn(),
-    },
-  }),
-  { virtual: true }
-);
+jest.mock("../productModel", () => ({
+  ProductModel: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    updateOne: jest.fn(),
+  },
+}));
 
 import { productService } from "../../../services/productService";
 import * as ModelModule from "../productModel";
 
-const mocked = (ModelModule as any).ProductModel as {
+const mocked = ModelModule.ProductModel as any as {
   find: jest.Mock;
   findOne: jest.Mock;
   create: jest.Mock;
