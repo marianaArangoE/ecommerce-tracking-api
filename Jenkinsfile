@@ -23,10 +23,10 @@ pipeline {
                 echo 'Starting running tests'
                 script {
                     if (isUnix()){
-                        sh 'npm run test'
+                        sh 'npx --jest coverage'
                     }
                     else {
-                        bat 'npm run test'
+                        bat 'npx --jest coverage'
                     }
                 }
             }
