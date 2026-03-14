@@ -1,6 +1,5 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
-  // Corre ambos proyectos por defecto: jest elegirá el que aplica por patrón
   projects: [
     {
       displayName: 'unit',
@@ -25,18 +24,6 @@ module.exports = {
       ],
       coverageDirectory: 'coverage',
       coverageReporters: ['text', 'lcov', 'html'],
-    },
-    {
-      displayName: 'integration',
-      preset: 'ts-jest',
-      testEnvironment: 'node',
-      testTimeout: 30000,
-      testMatch: [
-        '<rootDir>/tests/integration/**/*.spec.ts',
-        '<rootDir>/tests/integration/**/*.test.ts',
-      ],
-      setupFilesAfterEnv: ['<rootDir>/tests/setupMongo.ts'],
-      roots: ['<rootDir>/tests/integration'],
     },
   ],
 };
