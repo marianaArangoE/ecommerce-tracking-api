@@ -22,7 +22,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
     "@types/supertest": "^6.0.3",
-    "express": "^5.1.0",
     "jest": "^30.2.0",
     "mongodb-memory-server": "^10.2.3",
     "supertest": "^7.1.4",
@@ -33,6 +32,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
+    "express": "^5.1.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
