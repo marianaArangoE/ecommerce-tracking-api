@@ -2,8 +2,14 @@ pipeline {
     agent any
 
     tools {
+
+    tools {
         nodejs 'Node'
     }
+
+    stages {
+        stage('Install Dependencies') {
+            steps {
 
     stages {
         stage('Install Dependencies') {
@@ -13,7 +19,13 @@ pipeline {
                     if (isUnix()) {
                         sh 'node -v'
                         sh 'npm -v'
+                    if (isUnix()) {
+                        sh 'node -v'
+                        sh 'npm -v'
                         sh 'npm install'
+                    } else {
+                        bat 'node -v'
+                        bat 'npm -v'
                     } else {
                         bat 'node -v'
                         bat 'npm -v'
@@ -22,6 +34,9 @@ pipeline {
                 }
             }
         }
+
+        stage('Run Jest Test') {
+            steps {
 
         stage('Run Jest Test') {
             steps {
