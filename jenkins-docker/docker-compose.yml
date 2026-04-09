@@ -1,0 +1,28 @@
+# Uso (Linux con Docker en el host):
+#   cd jenkins-docker
+#   docker compose build --no-cache
+#   docker compose up -d
+#
+# Si al ejecutar jobs falla `docker ps` por permisos del socket, crea un `.env` aquí con:
+#   DOCKER_GID=<salida de: getent group docker | cut -d: -f3>
+# y descomenta las dos líneas de group_add abajo.
+
+services:
+  jenkins:
+    build: .
+    image: ecommerce-jenkins:lts
+    container_name: ecommerce-jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      TZ: UTC
+    # group_add:
+    #   - "${DOCKER_GID}"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  jenkins_home:
