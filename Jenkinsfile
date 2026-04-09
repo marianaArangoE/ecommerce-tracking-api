@@ -1,5 +1,3 @@
-// API puede quedar en la raíz del workspace (un solo repo) o en ecommerce-tracking-api/ (checkout con subcarpetas + segundo remote).
-// tools { nodejs '...' } debe coincidir con el Name en Jenkins → Tools → NodeJS.
 pipeline {
     agent any
 
@@ -12,7 +10,6 @@ pipeline {
         GIT_FRONT_URL = 'https://github.com/Juank0017/ecommerce-tracking-front.git'
         GIT_FRONT_CREDENTIALS = "${env.GIT_FRONT_CREDENTIALS ?: 'Github'}"
         VITE_API_URL = "${env.VITE_API_URL ?: 'http://localhost:3000'}"
-        // Jenkins suele usar el host :8080; el front por defecto también — evita "port is already allocated".
         FRONTEND_PORT = "${env.FRONTEND_PORT ?: '8081'}"
     }
 
