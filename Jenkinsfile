@@ -12,6 +12,8 @@ pipeline {
         GIT_FRONT_URL = 'https://github.com/Juank0017/ecommerce-tracking-front.git'
         GIT_FRONT_CREDENTIALS = "${env.GIT_FRONT_CREDENTIALS ?: 'Github'}"
         VITE_API_URL = "${env.VITE_API_URL ?: 'http://localhost:3000'}"
+        // Jenkins suele usar el host :8080; el front por defecto también — evita "port is already allocated".
+        FRONTEND_PORT = "${env.FRONTEND_PORT ?: '8081'}"
     }
 
     stages {
@@ -106,7 +108,7 @@ pipeline {
         stage('Docker: Start Frontend stack') {
             steps {
                 dir(env.DIR_FRONT) {
-                    withEnv(["VITE_API_URL=${env.VITE_API_URL}"]) {
+                    withEnv(["VITE_API_URL=${env.VITE_API_URL}", "FRONTEND_PORT=${env.FRONTEND_PORT}"]) {
                         script {
                             if (isUnix()) {
                                 sh 'docker compose up --build -d'
