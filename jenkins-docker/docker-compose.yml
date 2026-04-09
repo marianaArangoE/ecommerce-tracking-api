@@ -6,9 +6,11 @@
 # 2) Crea jenkins-docker/.env con:
 #    DOCKER_GID=XXX
 #
-# 3) Reconstruye y levanta (obligatorio tras cambiar DOCKER_GID):
+# 3) Reconstruye y recrea el contenedor (obligatorio tras cambiar .env):
 #    docker compose build --no-cache
-#    docker compose up -d
+#    docker compose up -d --force-recreate
+#
+# group_add inyecta el GID del socket en runtime (en Docker Desktop el build usermod a veces no basta).
 
 services:
   jenkins:
@@ -19,6 +21,8 @@ services:
     image: ecommerce-jenkins:lts
     container_name: ecommerce-jenkins
     restart: unless-stopped
+    group_add:
+      - "${DOCKER_GID:-999}"
     ports:
       - "8080:8080"
       - "50000:50000"
