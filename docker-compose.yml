@@ -11,8 +11,8 @@ services:
       MONGO_URI: mongodb://mongo:27017/ecommerce
       JWT_SECRET: change-me-access-secret
       JWT_REFRESH_SECRET: change-me-refresh-secret
-      CLIENT_ORIGINS: http://localhost:5173
-      FRONTEND_URL: http://localhost:5173
+      CLIENT_ORIGINS: http://localhost:8081
+      FRONTEND_URL: http://localhost:8081
       SMTP_HOST: smtp.gmail.com
       SMTP_PORT: 587
       SMTP_USER: your-email@example.com
