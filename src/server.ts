@@ -11,6 +11,7 @@ import {
 } from "./application/middlewares/errorHandle";
 
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ecommerce";
 
 
@@ -35,7 +36,9 @@ app.use(genericErrorHandler);
   try {
     await connectMongo(mongoUri);
     console.log("[mongo] conexión exitosa");
-    server.listen(PORT, () => console.log(`🚀 Server + WS on :${PORT}`));
+    server.listen(PORT, HOST, () =>
+      console.log(`🚀 Server + WS on http://${HOST}:${PORT}`),
+    );
   } catch (err) {
     console.error("[mongo] error de conexión:", err);
     process.exit(1);
