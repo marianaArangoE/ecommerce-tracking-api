@@ -10,4 +10,7 @@ COPY --from=docker/compose-bin:latest /docker-compose /usr/local/libexec/docker/
 
 RUN chmod +x /usr/local/bin/docker /usr/local/libexec/docker/cli-plugins/docker-compose
 
+RUN apt-get update && apt-get install -y --no-install-recommends libatomic1 \
+    && rm -rf /var/lib/apt/lists/*
+
 USER jenkins
