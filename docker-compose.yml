@@ -1,14 +1,32 @@
+# Variables: Compose usa el archivo `.env` en esta carpeta SOLO para sustituir ${VAR} aquí
+# (no hace falta servicio env_file). En local: deja tu .env. En Jenkins: sin .env en el clone,
+# define las mismas claves como variables de entorno del job o Bindings de credenciales.
+#
+# Atlas: docker compose up -d --build
+# Mongo en Docker: MONGO_URI=mongodb://mongo:27017/test y
+#                 docker compose --profile local-mongo up -d --build
+
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ecommerce-tracking-api
-    env_file:
-      - .env
     environment:
-      # Solo lo que debe forzar Compose; el resto lo define .env tal cual.
       NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      WS_PORT: ${WS_PORT:-3001}
+      MONGO_URI: ${MONGO_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE_IN: ${JWT_EXPIRE_IN:-24H}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      CLIENT_ORIGINS: ${CLIENT_ORIGINS:-http://localhost:5173,http://localhost:8081}
+      APP_NAME: ${APP_NAME:-Ecommerce API}
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     restart: unless-stopped
