@@ -14,10 +14,8 @@ const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ecommerce";
 
-
 const server = http.createServer(app);
 initSocket(server);
-
 
 app.get("/", (_req, res) => res.send("API Running OK ✅"));
 app.get("/health/db", (_req, res) => {
@@ -27,7 +25,6 @@ app.get("/health/db", (_req, res) => {
   });
 });
 
-
 app.use(boomErrorHandler);
 app.use(mongoErrorHandler);
 app.use(genericErrorHandler);
@@ -36,9 +33,9 @@ app.use(genericErrorHandler);
   try {
     await connectMongo(mongoUri);
     console.log("[mongo] conexión exitosa");
-    server.listen(PORT, HOST, () =>
-      console.log(`🚀 Server + WS on http://${HOST}:${PORT}`),
-    );
+    server.listen({ port: PORT, host: HOST }, () => {
+      console.log(`🚀 Server + WS on http://${HOST}:${PORT}`);
+    });
   } catch (err) {
     console.error("[mongo] error de conexión:", err);
     process.exit(1);

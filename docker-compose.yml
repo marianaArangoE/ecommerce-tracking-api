@@ -24,7 +24,7 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8081}
       CLIENT_ORIGINS: ${CLIENT_ORIGINS:-http://localhost:5173,http://localhost:8081}
       APP_NAME: ${APP_NAME:-Ecommerce API}
     ports:
