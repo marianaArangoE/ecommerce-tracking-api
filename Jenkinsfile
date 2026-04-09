@@ -1,3 +1,6 @@
+// Job Jenkins: un solo repositorio en "Pipeline script from SCM" → solo la API, rama main, Script Path: Jenkinsfile
+// No añadas el repo del front en la misma pantalla Git (evita "Multiple candidate revisions" y checkout en origin1/main).
+// Credencial Git del front: por defecto "Github"; sobreescribe con variable de entorno GIT_FRONT_CREDENTIALS en el job.
 pipeline {
     agent any
 
@@ -6,21 +9,36 @@ pipeline {
     }
 
     environment {
-        DIR_API = 'ecommerce-tracking-api'
         DIR_FRONT = 'ecommerce-tracking-front'
+        GIT_FRONT_URL = 'https://github.com/Juank0017/ecommerce-tracking-front.git'
+        GIT_FRONT_CREDENTIALS = "${env.GIT_FRONT_CREDENTIALS ?: 'Github'}"
         VITE_API_URL = "${env.VITE_API_URL ?: 'http://localhost:3000'}"
     }
 
     stages {
+        stage('Checkout Frontend') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [
+                        [$class: 'RelativeTargetDirectory', relativeTargetDir: "${env.DIR_FRONT}"]
+                    ],
+                    userRemoteConfigs: [[
+                        url: "${env.GIT_FRONT_URL}",
+                        credentialsId: "${env.GIT_FRONT_CREDENTIALS}"
+                    ]]
+                ])
+            }
+        }
+
         stage('API: Install dependencies') {
             steps {
-                dir(env.DIR_API) {
-                    script {
-                        if (isUnix()) {
-                            sh 'node -v && npm -v && npm ci'
-                        } else {
-                            bat 'node -v && npm -v && npm ci'
-                        }
+                script {
+                    if (isUnix()) {
+                        sh 'node -v && npm -v && npm ci'
+                    } else {
+                        bat 'node -v && npm -v && npm ci'
                     }
                 }
             }
@@ -28,13 +46,11 @@ pipeline {
 
         stage('API: Tests') {
             steps {
-                dir(env.DIR_API) {
-                    script {
-                        if (isUnix()) {
-                            sh 'npx jest --coverage --runInBand'
-                        } else {
-                            bat 'npx jest --coverage --runInBand'
-                        }
+                script {
+                    if (isUnix()) {
+                        sh 'npx jest --coverage --runInBand'
+                    } else {
+                        bat 'npx jest --coverage --runInBand'
                     }
                 }
             }
@@ -43,7 +59,7 @@ pipeline {
         stage('Docker: Stop stacks') {
             steps {
                 script {
-                    [env.DIR_API, env.DIR_FRONT].each { subdir ->
+                    ['.', env.DIR_FRONT].each { subdir ->
                         dir(subdir) {
                             if (isUnix()) {
                                 sh 'docker compose down -v || true'
@@ -58,13 +74,11 @@ pipeline {
 
         stage('Docker: Start API stack') {
             steps {
-                dir(env.DIR_API) {
-                    script {
-                        if (isUnix()) {
-                            sh 'docker compose up --build -d'
-                        } else {
-                            bat 'docker compose up --build -d'
-                        }
+                script {
+                    if (isUnix()) {
+                        sh 'docker compose up --build -d'
+                    } else {
+                        bat 'docker compose up --build -d'
                     }
                 }
             }
