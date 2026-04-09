@@ -15,4 +15,15 @@ COPY --from=docker/compose-bin:latest /docker-compose /usr/local/libexec/docker/
 
 RUN chmod +x /usr/local/bin/docker /usr/local/libexec/docker/cli-plugins/docker-compose
 
+# GID del propietario de grupo de /var/run/docker.sock en el HOST (docker-compose pasa build-arg desde .env).
+# Valor por defecto si construyes a mano sin compose: 999 (típico en Linux); Docker Desktop suele ser 0 → pon DOCKER_GID=0 en .env.
+ARG DOCKER_GID=999
+RUN set -eux; \
+    EXISTING="$(getent group "${DOCKER_GID}" | cut -d: -f1 || true)"; \
+    if [ -z "${EXISTING}" ]; then \
+      groupadd -g "${DOCKER_GID}" docker-sock; \
+      EXISTING=docker-sock; \
+    fi; \
+    usermod -aG "${EXISTING}" jenkins
+
 USER jenkins
