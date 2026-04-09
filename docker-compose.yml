@@ -4,30 +4,22 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ecommerce-tracking-api
-    ports:
-      - "3000:3000"
+    env_file:
+      - .env
     environment:
-      PORT: 3000
-      MONGO_URI: mongodb://mongo:27017/test
-      JWT_SECRET: change-me-access-secret
-      JWT_REFRESH_SECRET: change-me-refresh-secret
-      CLIENT_ORIGINS: http://localhost:8081
-      FRONTEND_URL: http://localhost:8081
-      SMTP_HOST: smtp.gmail.com
-      SMTP_PORT: 587
-      SMTP_USER: your-email@example.com
-      SMTP_PASS: your-email-password
-      APP_NAME: Ecommerce API
-    depends_on:
-      mongo:
-        condition: service_healthy
+      # Solo lo que debe forzar Compose; el resto lo define .env tal cual.
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
     restart: unless-stopped
 
   mongo:
     image: mongo:7
     container_name: ecommerce-mongo
+    profiles:
+      - local-mongo
     ports:
-      - "27017:27017"
+      - "${MONGO_HOST_PORT:-27017}:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
