@@ -172,16 +172,17 @@ pipeline {
             dir(env.TERRAFORM_DIR) {
                 script {
                     def planArgs = "-var aws_region=${env.AWS_REGION} -var aws_account_id=${env.AWS_ACCOUNT_ID} -var api_image=${env.API_IMAGE_URI} -var frontend_image=${env.FRONT_IMAGE_URI} -var client_origins=${env.CLIENT_ORIGINS} -var frontend_url=${env.FRONTEND_URL} -var smtp_host=${env.SMTP_HOST} -var smtp_port=${env.SMTP_PORT} -var service_desired_count=${env.SERVICE_DESIRED_COUNT}"
-                    withCredentials([string(credentialsId: 'mongo-uri', variable: 'MONGO_URI'),
+                    withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
+                                     string(credentialsId: 'mongo-uri', variable: 'MONGO_URI'),
                                      string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
                                      string(credentialsId: 'JWT_REFRESH_SECRET', variable: 'JWT_REFRESH_SECRET'),
                                      string(credentialsId: 'SMTP_USER', variable: 'SMTP_USER'),
                                      string(credentialsId: 'SMTP_PASS', variable: 'SMTP_PASS')]) {
                         def secretArgs = " -var 'mongo_uri=${MONGO_URI}' -var 'jwt_secret=${JWT_SECRET}' -var 'jwt_refresh_secret=${JWT_REFRESH_SECRET}' -var 'smtp_user=${SMTP_USER}' -var 'smtp_pass=${SMTP_PASS}'"
                         if (isUnix()) {
-                            sh "terraform plan ${planArgs}${secretArgs} -out=tfplan"
+                            sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && terraform plan ${planArgs}${secretArgs} -out=tfplan"
                         } else {
-                            bat "terraform plan ${planArgs}${secretArgs} -out=tfplan"
+                            bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && terraform plan ${planArgs}${secretArgs} -out=tfplan"
                             }
                         }
                     }
