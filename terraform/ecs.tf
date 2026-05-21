@@ -223,6 +223,8 @@ resource "aws_ecs_service" "api" {
   desired_count   = var.service_desired_count
   launch_type     = "FARGATE"
 
+  force_new_deployment = true
+
   network_configuration {
     subnets         = aws_subnet.public[*].id
     security_groups = [aws_security_group.ecs.id]
@@ -244,6 +246,8 @@ resource "aws_ecs_service" "frontend" {
   task_definition = aws_ecs_task_definition.frontend.arn
   desired_count   = var.service_desired_count
   launch_type     = "FARGATE"
+
+  force_new_deployment = true
 
   network_configuration {
     subnets         = aws_subnet.public[*].id
