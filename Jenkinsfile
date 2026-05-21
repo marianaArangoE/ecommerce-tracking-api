@@ -14,8 +14,8 @@ pipeline {
         ECR_API_REPO = 'ecommerce-tracking-api'
         ECR_FRONT_REPO = 'ecommerce-tracking-front'
         TERRAFORM_DIR = 'terraform'
-        FRONT_IMAGE_TAG = "${env.FRONT_IMAGE_TAG ?: 'latest'}"
-        API_IMAGE_TAG = "${env.API_IMAGE_TAG ?: 'latest'}"
+        FRONT_IMAGE_TAG = "${env.FRONT_IMAGE_TAG ?: env.BUILD_NUMBER ?: 'latest'}"
+        API_IMAGE_TAG = "${env.API_IMAGE_TAG ?: env.BUILD_NUMBER ?: 'latest'}"
         CLIENT_ORIGINS = "${env.CLIENT_ORIGINS ?: '*'}"
         FRONTEND_URL = "${env.FRONTEND_URL ?: 'http://localhost'}"
         SMTP_HOST = "${env.SMTP_HOST ?: 'smtp.gmail.com'}"
@@ -101,9 +101,9 @@ pipeline {
                     }
 
                     if (isUnix()) {
-                        sh "docker build --build-arg VITE_API_URL=/api -t ${env.FRONT_IMAGE_URI} -f ${env.DIR_FRONT}/Dockerfile ${env.DIR_FRONT}"
+                        sh "docker build --build-arg VITE_API_URL= -t ${env.FRONT_IMAGE_URI} -f ${env.DIR_FRONT}/Dockerfile ${env.DIR_FRONT}"
                     } else {
-                        bat "docker build --build-arg VITE_API_URL=/api -t ${env.FRONT_IMAGE_URI} -f ${env.DIR_FRONT}/Dockerfile ${env.DIR_FRONT}"
+                        bat "docker build --build-arg VITE_API_URL= -t ${env.FRONT_IMAGE_URI} -f ${env.DIR_FRONT}/Dockerfile ${env.DIR_FRONT}"
                     }
                 }
             }
