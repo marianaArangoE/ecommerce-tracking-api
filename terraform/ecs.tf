@@ -65,6 +65,7 @@ resource "aws_lb" "http" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = aws_subnet.public[*].id
+  idle_timeout       = 300 # Added for WebSocket support
 
   tags = {
     Name = "ecommerce-tracking-alb"
@@ -130,6 +131,22 @@ resource "aws_lb_listener_rule" "api" {
   condition {
     path_pattern {
       values = ["/api/*", "/api"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "websocket" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 99
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.api.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/socket.io*"]
     }
   }
 }
