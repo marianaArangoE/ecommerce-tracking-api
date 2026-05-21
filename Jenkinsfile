@@ -9,7 +9,7 @@ pipeline {
         DIR_FRONT = 'ecommerce-tracking-front'
         GIT_FRONT_URL = 'https://github.com/Juank0017/ecommerce-tracking-front.git'
         GIT_FRONT_CREDENTIALS = "${env.GIT_FRONT_CREDENTIALS ?: 'github-front'}"
-        AWS_REGION = "${env.AWS_REGION ?: 'us-east-1'}"
+        AWS_REGION = "${env.AWS_REGION ?: 'us-east-2'}"
         AWS_ACCOUNT_ID = "${env.AWS_ACCOUNT_ID ?: ''}"
         ECR_API_REPO = 'ecommerce-tracking-api'
         ECR_FRONT_REPO = 'ecommerce-tracking-front'
