@@ -109,48 +109,6 @@ pipeline {
             }
         }
 
-        stage('AWS ECR Login') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        if (isUnix()) {
-                            sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && aws ecr get-login-password --region ${env.AWS_REGION} | docker login --username AWS --password-stdin ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
-                        } else {
-                            bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && aws ecr get-login-password --region ${env.AWS_REGION} | docker login --username AWS --password-stdin ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Create ECR repositories') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        if (isUnix()) {
-                            sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && aws ecr describe-repositories --repository-names ${env.ECR_API_REPO} || aws ecr create-repository --repository-name ${env.ECR_API_REPO}; aws ecr describe-repositories --repository-names ${env.ECR_FRONT_REPO} || aws ecr create-repository --repository-name ${env.ECR_FRONT_REPO}"
-                        } else {
-                            bat "powershell -Command \"if (-not (aws ecr describe-repositories --repository-names ${env.ECR_API_REPO} -ErrorAction SilentlyContinue)) { aws ecr create-repository --repository-name ${env.ECR_API_REPO} }; if (-not (aws ecr describe-repositories --repository-names ${env.ECR_FRONT_REPO} -ErrorAction SilentlyContinue)) { aws ecr create-repository --repository-name ${env.ECR_FRONT_REPO} }\""
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Push images to ECR') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        if (isUnix()) {
-                            sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && docker push ${env.API_IMAGE_URI} && docker push ${env.FRONT_IMAGE_URI}"
-                        } else {
-                            bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && docker push ${env.API_IMAGE_URI} & docker push ${env.FRONT_IMAGE_URI}"
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Terraform Init') {
             steps {
                 dir(env.TERRAFORM_DIR) {
@@ -168,27 +126,27 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-        steps {
-            dir(env.TERRAFORM_DIR) {
-                script {
-                    def planArgs = "-var aws_region=${env.AWS_REGION} -var aws_account_id=${env.AWS_ACCOUNT_ID} -var api_image=${env.API_IMAGE_URI} -var frontend_image=${env.FRONT_IMAGE_URI} -var client_origins=${env.CLIENT_ORIGINS} -var frontend_url=${env.FRONTEND_URL} -var smtp_host=${env.SMTP_HOST} -var smtp_port=${env.SMTP_PORT} -var service_desired_count=${env.SERVICE_DESIRED_COUNT}"
-                    withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
-                                     string(credentialsId: 'mongo-uri', variable: 'MONGO_URI'),
-                                     string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
-                                     string(credentialsId: 'JWT_REFRESH_SECRET', variable: 'JWT_REFRESH_SECRET'),
-                                     string(credentialsId: 'SMTP_USER', variable: 'SMTP_USER'),
-                                     string(credentialsId: 'SMTP_PASS', variable: 'SMTP_PASS')]) {
-                        def secretArgs = " -var 'mongo_uri=${MONGO_URI}' -var 'jwt_secret=${JWT_SECRET}' -var 'jwt_refresh_secret=${JWT_REFRESH_SECRET}' -var 'smtp_user=${SMTP_USER}' -var 'smtp_pass=${SMTP_PASS}'"
-                        if (isUnix()) {
-                            sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && terraform plan ${planArgs}${secretArgs} -out=tfplan"
-                        } else {
-                            bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && terraform plan ${planArgs}${secretArgs} -out=tfplan"
+            steps {
+                dir(env.TERRAFORM_DIR) {
+                    script {
+                        def planArgs = "-var aws_region=${env.AWS_REGION} -var aws_account_id=${env.AWS_ACCOUNT_ID} -var api_image=${env.API_IMAGE_URI} -var frontend_image=${env.FRONT_IMAGE_URI} -var client_origins=${env.CLIENT_ORIGINS} -var frontend_url=${env.FRONTEND_URL} -var smtp_host=${env.SMTP_HOST} -var smtp_port=${env.SMTP_PORT} -var service_desired_count=${env.SERVICE_DESIRED_COUNT}"
+                        withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
+                                         string(credentialsId: 'mongo-uri', variable: 'MONGO_URI'),
+                                         string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
+                                         string(credentialsId: 'JWT_REFRESH_SECRET', variable: 'JWT_REFRESH_SECRET'),
+                                         string(credentialsId: 'SMTP_USER', variable: 'SMTP_USER'),
+                                         string(credentialsId: 'SMTP_PASS', variable: 'SMTP_PASS')]) {
+                            def secretArgs = " -var 'mongo_uri=${MONGO_URI}' -var 'jwt_secret=${JWT_SECRET}' -var 'jwt_refresh_secret=${JWT_REFRESH_SECRET}' -var 'smtp_user=${SMTP_USER}' -var 'smtp_pass=${SMTP_PASS}'"
+                            if (isUnix()) {
+                                sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && terraform plan ${planArgs}${secretArgs} -out=tfplan"
+                            } else {
+                                bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && terraform plan ${planArgs}${secretArgs} -out=tfplan"
                             }
                         }
                     }
                 }
             }
-        }   
+        }
 
         stage('Terraform Apply') {
             steps {
@@ -200,6 +158,34 @@ pipeline {
                             } else {
                                 bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && terraform apply -input=false -auto-approve tfplan"
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('AWS ECR Login') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                        if (isUnix()) {
+                            sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && aws ecr get-login-password --region ${env.AWS_REGION} | docker login --username AWS --password-stdin ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
+                        } else {
+                            bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && aws ecr get-login-password --region ${env.AWS_REGION} | docker login --username AWS --password-stdin ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Push images to ECR') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'AWS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                        if (isUnix()) {
+                            sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} && docker push ${env.API_IMAGE_URI} && docker push ${env.FRONT_IMAGE_URI}"
+                        } else {
+                            bat "set AWS_ACCESS_KEY_ID=%AWS_ACCESS_KEY_ID% && set AWS_SECRET_ACCESS_KEY=%AWS_SECRET_ACCESS_KEY% && docker push ${env.API_IMAGE_URI} & docker push ${env.FRONT_IMAGE_URI}"
                         }
                     }
                 }
