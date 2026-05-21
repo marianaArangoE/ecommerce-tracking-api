@@ -61,6 +61,30 @@ variable "frontend_url" {
   default     = ""
 }
 
+variable "smtp_host" {
+  description = "SMTP host used by the API email service."
+  type        = string
+  default     = "smtp.gmail.com"
+}
+
+variable "smtp_port" {
+  description = "SMTP port used by the API email service."
+  type        = string
+  default     = "587"
+}
+
+variable "smtp_user" {
+  description = "SMTP username for the API email service."
+  type        = string
+  default     = ""
+}
+
+variable "smtp_pass" {
+  description = "SMTP password for the API email service."
+  type        = string
+  default     = ""
+}
+
 variable "service_desired_count" {
   description = "Number of desired Fargate tasks per service."
   type        = number

@@ -18,6 +18,8 @@ pipeline {
         API_IMAGE_TAG = "${env.API_IMAGE_TAG ?: 'latest'}"
         CLIENT_ORIGINS = "${env.CLIENT_ORIGINS ?: '*'}"
         FRONTEND_URL = "${env.FRONTEND_URL ?: 'http://localhost'}"
+        SMTP_HOST = "${env.SMTP_HOST ?: 'smtp.gmail.com'}"
+        SMTP_PORT = "${env.SMTP_PORT ?: '587'}"
         SERVICE_DESIRED_COUNT = "${env.SERVICE_DESIRED_COUNT ?: '1'}"
     }
 
@@ -169,11 +171,13 @@ pipeline {
         steps {
             dir(env.TERRAFORM_DIR) {
                 script {
-                    def planArgs = "-var aws_region=${env.AWS_REGION} -var aws_account_id=${env.AWS_ACCOUNT_ID} -var api_image=${env.API_IMAGE_URI} -var frontend_image=${env.FRONT_IMAGE_URI} -var client_origins=${env.CLIENT_ORIGINS} -var frontend_url=${env.FRONTEND_URL} -var service_desired_count=${env.SERVICE_DESIRED_COUNT}"
+                    def planArgs = "-var aws_region=${env.AWS_REGION} -var aws_account_id=${env.AWS_ACCOUNT_ID} -var api_image=${env.API_IMAGE_URI} -var frontend_image=${env.FRONT_IMAGE_URI} -var client_origins=${env.CLIENT_ORIGINS} -var frontend_url=${env.FRONTEND_URL} -var smtp_host=${env.SMTP_HOST} -var smtp_port=${env.SMTP_PORT} -var service_desired_count=${env.SERVICE_DESIRED_COUNT}"
                     withCredentials([string(credentialsId: 'mongo-uri', variable: 'MONGO_URI'),
                                      string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
-                                     string(credentialsId: 'JWT_REFRESH_SECRET', variable: 'JWT_REFRESH_SECRET')]) {
-                        def secretArgs = " -var 'mongo_uri=${MONGO_URI}' -var 'jwt_secret=${JWT_SECRET}' -var 'jwt_refresh_secret=${JWT_REFRESH_SECRET}'"
+                                     string(credentialsId: 'JWT_REFRESH_SECRET', variable: 'JWT_REFRESH_SECRET'),
+                                     string(credentialsId: 'SMTP_USER', variable: 'SMTP_USER'),
+                                     string(credentialsId: 'SMTP_PASS', variable: 'SMTP_PASS')]) {
+                        def secretArgs = " -var 'mongo_uri=${MONGO_URI}' -var 'jwt_secret=${JWT_SECRET}' -var 'jwt_refresh_secret=${JWT_REFRESH_SECRET}' -var 'smtp_user=${SMTP_USER}' -var 'smtp_pass=${SMTP_PASS}'"
                         if (isUnix()) {
                             sh "terraform plan ${planArgs}${secretArgs} -out=tfplan"
                         } else {

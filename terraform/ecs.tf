@@ -163,6 +163,10 @@ resource "aws_ecs_task_definition" "api" {
         { name = "JWT_REFRESH_SECRET", value = var.jwt_refresh_secret },
         { name = "CLIENT_ORIGINS", value = var.client_origins },
         { name = "FRONTEND_URL", value = var.frontend_url },
+        { name = "SMTP_HOST", value = var.smtp_host },
+        { name = "SMTP_PORT", value = var.smtp_port },
+        { name = "SMTP_USER", value = var.smtp_user },
+        { name = "SMTP_PASS", value = var.smtp_pass },
         { name = "NODE_ENV", value = "production" },
       ]
       logConfiguration = {
