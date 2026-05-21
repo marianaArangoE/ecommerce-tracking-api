@@ -158,12 +158,12 @@ resource "aws_ecs_task_definition" "api" {
         }
       ]
       environment = [
-        { name = "MONGO_URI" value = var.mongo_uri }
-        { name = "JWT_SECRET" value = var.jwt_secret }
-        { name = "JWT_REFRESH_SECRET" value = var.jwt_refresh_secret }
-        { name = "CLIENT_ORIGINS" value = var.client_origins }
-        { name = "FRONTEND_URL" value = var.frontend_url }
-        { name = "NODE_ENV" value = "production" }
+        { name = "MONGO_URI", value = var.mongo_uri },
+        { name = "JWT_SECRET", value = var.jwt_secret },
+        { name = "JWT_REFRESH_SECRET", value = var.jwt_refresh_secret },
+        { name = "CLIENT_ORIGINS", value = var.client_origins },
+        { name = "FRONTEND_URL", value = var.frontend_url },
+        { name = "NODE_ENV", value = "production" },
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -197,8 +197,8 @@ resource "aws_ecs_task_definition" "frontend" {
         }
       ]
       environment = [
-        { name = "NODE_ENV" value = "production" }
-        { name = "VITE_API_URL" value = "/api" }
+        { name = "NODE_ENV", value = "production" },
+        { name = "VITE_API_URL", value = "/api" },
       ]
       logConfiguration = {
         logDriver = "awslogs"
