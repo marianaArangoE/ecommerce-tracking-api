@@ -94,6 +94,12 @@ userRouter.post(
   Controller.register
 );
 
+userRouter.get(
+   '/example',
+  
+);
+
+
 /* ==================== VERIFICACIÓN DE EMAIL ==================== */
 // Verificar email con token (POST para API)
 userRouter.post(
