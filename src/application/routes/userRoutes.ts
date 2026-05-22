@@ -94,7 +94,7 @@ userRouter.post(
   Controller.register
 );
 
-userRouter.get(
+userRouter.post(
   '/example',
   schemaValidator('body', registerSchema),
   Controller.register
