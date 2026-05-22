@@ -42,14 +42,14 @@ userRouter.post(
 
 // LISTAR direcciones del usuario
 userRouter.get(
-  '/me/addresses', 
+  '/me/addresses',
   requireAuth,
   Controller.getAddresses
 );
 
 // Ver Perfil
 userRouter.get(
-  '/me', 
+  '/me',
   requireAuth,
   Controller.getMe
 );
@@ -95,8 +95,9 @@ userRouter.post(
 );
 
 userRouter.get(
-   '/example',
-  
+  '/example',
+  schemaValidator('body', registerSchema),
+  Controller.register
 );
 
 
